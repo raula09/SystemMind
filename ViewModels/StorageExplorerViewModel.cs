@@ -39,6 +39,7 @@ public sealed class StorageExplorerViewModel : INotifyPropertyChanged
 
     public ObservableCollection<FileSystemNode> RootNodes { get; } = [];
     public ObservableCollection<ExtensionStat> Extensions { get; } = [];
+    public ObservableCollection<DriveItem> AvailableDrives { get; } = [];
 
     public string ScanPath
     {
@@ -155,14 +156,25 @@ public sealed class StorageExplorerViewModel : INotifyPropertyChanged
     public ICommand PermanentDeleteCommand { get; }
     public ICommand CopyPathCommand { get; }
     public ICommand AskAiAboutSelectedCommand { get; }
+    public ICommand SelectDriveCommand { get; }
+    public ICommand RefreshDrivesCommand { get; }
 
     public StorageExplorerViewModel()
     {
         var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        _scanPath = string.IsNullOrEmpty(userHome) ? "/" : userHome;
+        _scanPath = "/"; // Show every single file from root by default
 
         ScanCommand = new AsyncCommand(_ => StartScanAsync());
         CancelCommand = new RelayCommand(CancelScan);
+        SelectDriveCommand = new RelayCommand(p =>
+        {
+            if (p is DriveItem drive)
+            {
+                ScanPath = drive.MountPoint;
+                _ = StartScanAsync();
+            }
+        });
+        RefreshDrivesCommand = new RelayCommand(RefreshDrives);
         SetQuickPathCommand = new RelayCommand(p =>
         {
             if (p is string path)
@@ -187,6 +199,17 @@ public sealed class StorageExplorerViewModel : INotifyPropertyChanged
                 RequestAiQuestion?.Invoke($"What is '{SelectedNode.FullPath}' ({SelectedNode.FormattedSize}), and is it safe to clean or remove?");
             }
         });
+
+        RefreshDrives();
+    }
+
+    public void RefreshDrives()
+    {
+        AvailableDrives.Clear();
+        foreach (var d in SystemMonitor.GetPhysicalDrives())
+        {
+            AvailableDrives.Add(d);
+        }
     }
 
     public async Task StartScanAsync()
