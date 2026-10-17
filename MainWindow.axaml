@@ -89,6 +89,11 @@
                   Classes.nav="{Binding !IsPerformanceActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="Performance"/>
 
+          <Button Content="📈 Live Resources"
+                  Classes.nav-active="{Binding IsLiveResourcesActive}"
+                  Classes.nav="{Binding !IsLiveResourcesActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="LiveResources"/>
+
           <Button Content="⚙️ Settings"
                   Classes.nav-active="{Binding IsSettingsActive}"
                   Classes.nav="{Binding !IsSettingsActive}"
@@ -474,21 +479,22 @@
         <!-- Process List Table -->
         <Border Grid.Row="2" Classes="card">
           <Grid RowDefinitions="Auto,*">
-            <Grid ColumnDefinitions="80,*,120,Auto" Margin="8,0,8,8">
+            <Grid ColumnDefinitions="65,*,105,100" Margin="8,0,8,8">
               <TextBlock Text="PID" Classes="muted" FontSize="12"/>
               <TextBlock Grid.Column="1" Text="Process Name" Classes="muted" FontSize="12"/>
-              <TextBlock Grid.Column="2" Text="Memory" Classes="muted" FontSize="12" HorizontalAlignment="Right"/>
-              <TextBlock Grid.Column="3" Text="Action" Classes="muted" FontSize="12" Margin="16,0,0,0"/>
+              <TextBlock Grid.Column="2" Text="Category" Classes="muted" FontSize="12"/>
+              <TextBlock Grid.Column="3" Text="Memory" Classes="muted" FontSize="12" HorizontalAlignment="Right"/>
             </Grid>
 
             <ListBox Grid.Row="1" ItemsSource="{Binding Performance.FilteredProcesses}"
                      SelectedItem="{Binding Performance.SelectedProcess, Mode=TwoWay}">
               <ListBox.ItemTemplate>
                 <DataTemplate>
-                  <Grid ColumnDefinitions="80,*,120,Auto" Margin="0,2">
+                  <Grid ColumnDefinitions="65,*,105,100" Margin="0,2">
                     <TextBlock Text="{Binding Id}" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}"
+                    <TextBlock Grid.Column="2" Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}"
                                Foreground="#35D3A0" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                   </Grid>
                 </DataTemplate>
@@ -497,6 +503,116 @@
           </Grid>
         </Border>
       </Grid>
+
+      <!-- LIVE RESOURCES -->
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding IsLiveResourcesActive}" Padding="24,20">
+        <StackPanel Spacing="16">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Live Resources" Classes="title"/>
+              <TextBlock Text="System usage and the processes contributing to it. Refreshes every 2 seconds." Classes="muted" FontSize="12"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="🔄 Refresh" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+            <Border Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,8,8">
+              <StackPanel Spacing="8">
+                <TextBlock Text="CPU" Classes="muted" FontSize="11" FontWeight="Bold"/>
+                <TextBlock Text="thinking power" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding CpuResourceText}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
+                <ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#00B7F4"/>
+                <Border BorderBrush="{Binding CpuStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding CpuStatus}" Foreground="{Binding CpuStatusColor}" FontSize="9" FontWeight="Bold"/>
+                </Border>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="8,0,0,8">
+              <StackPanel Spacing="8">
+                <TextBlock Text="MEMORY" Classes="muted" FontSize="11" FontWeight="Bold"/>
+                <TextBlock Text="room for open apps" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding MemoryResourcePercent, StringFormat='{}{0:F0}%'}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
+                <ProgressBar Value="{Binding MemoryResourcePercent}" Maximum="100" Foreground="{Binding MemoryStatusColor}"/>
+                <Border BorderBrush="{Binding MemoryStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding MemoryStatus}" Foreground="{Binding MemoryStatusColor}" FontSize="9" FontWeight="Bold"/>
+                </Border>
+                <TextBlock Text="{Binding MemoryResourceText}" Classes="muted" FontSize="10"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,8,0">
+              <StackPanel Spacing="8">
+                <TextBlock Text="DISK" Classes="muted" FontSize="11" FontWeight="Bold"/>
+                <TextBlock Text="storage used" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding DiskResourcePercent, StringFormat='{}{0:F0}%'}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
+                <ProgressBar Value="{Binding DiskResourcePercent}" Maximum="100" Foreground="{Binding DiskStatusColor}"/>
+                <Border BorderBrush="{Binding DiskStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding DiskStatus}" Foreground="{Binding DiskStatusColor}" FontSize="9" FontWeight="Bold"/>
+                </Border>
+                <TextBlock Text="{Binding StorageHeadline}" Classes="muted" FontSize="10"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="8,0,0,0">
+              <StackPanel Spacing="8">
+                <TextBlock Text="GRAPHICS" Classes="muted" FontSize="11" FontWeight="Bold"/>
+                <TextBlock Text="GPU" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding GpuText}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
+                <ProgressBar Value="{Binding GpuPercent}" Maximum="100" Foreground="#00B7F4" IsVisible="{Binding IsGpuAvailable}"/>
+                <Border BorderBrush="{Binding GpuStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding GpuStatus}" Foreground="{Binding GpuStatusColor}" FontSize="9" FontWeight="Bold"/>
+                </Border>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Border Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16">
+            <StackPanel Spacing="12">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding UsageBreakdownTitle}" Classes="muted" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="{Binding ResourceSortButtonText}" Command="{Binding CycleResourceMetricCommand}" Padding="10,5" FontSize="11"/>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding ResourceGroups}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Spacing="6" Margin="0,3">
+                      <Grid ColumnDefinitions="Auto,150,*,Auto,Auto" MinHeight="28">
+                        <Border Grid.Column="0" Width="10" Height="10" Background="{Binding Color}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center"/>
+                        <ProgressBar Grid.Column="2" Value="{Binding Percent}" Maximum="100" Foreground="{Binding Color}" Margin="8,0" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="{Binding UsageText}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        <Button Grid.Column="4" Content="{Binding ToggleText}" Command="{Binding ToggleExpandedCommand}" Padding="7,3" FontSize="10" Margin="14,0,0,0"/>
+                      </Grid>
+                      <StackPanel IsVisible="{Binding IsExpanded}" Spacing="4" Margin="20,0,0,8">
+                        <Grid ColumnDefinitions="*,55,65,65,80" Margin="0,0,12,2">
+                          <TextBlock Text="PROCESS" Classes="muted" FontSize="9"/>
+                          <TextBlock Grid.Column="1" Text="PID" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
+                          <TextBlock Grid.Column="2" Text="CPU" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
+                          <TextBlock Grid.Column="3" Text="GPU" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
+                          <TextBlock Grid.Column="4" Text="RAM" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding Processes}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border BorderBrush="#1E2832" BorderThickness="0,0,0,1" Padding="0,4">
+                                <Grid ColumnDefinitions="*,55,65,65,80" Margin="0,0,12,0">
+                                  <TextBlock Text="{Binding Name}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                  <TextBlock Grid.Column="1" Text="{Binding Id}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                  <TextBlock Grid.Column="2" Text="{Binding CpuText}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                  <TextBlock Grid.Column="3" Text="{Binding GpuText}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                  <TextBlock Grid.Column="4" Text="{Binding MemoryText}" Foreground="#35D3A0" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
 
       <!-- VIEW 5: SETTINGS -->
       <ScrollViewer Grid.Row="1" IsVisible="{Binding IsSettingsActive}" Padding="30,24">

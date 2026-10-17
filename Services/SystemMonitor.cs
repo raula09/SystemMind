@@ -9,10 +9,14 @@ public sealed class SystemMonitor
 {
     private const double Mb = 1024d * 1024d;
     private const double Gb = Mb * 1024d;
+    private readonly Dictionary<int, (TimeSpan Cpu, DateTime SampledAt)> _processCpu = [];
+    private (ulong Idle, ulong Kernel, ulong User)? _previousSystemTimes;
+    private (ulong Idle, ulong Total)? _previousLinuxCpu;
 
     public SystemSnapshot Capture()
     {
         var (totalGb, usedGb) = ReadMemory();
+        var gpuUsage = ReadGpu();
         var drives = DriveInfo.GetDrives()
             .Where(d => d.IsReady && d.TotalSize > 0)
             .Select(d => new DiskUsage(
@@ -21,26 +25,46 @@ public sealed class SystemMonitor
                 d.TotalSize / Gb))
             .ToList();
 
+        var now = DateTime.UtcNow;
         var allProcs = new List<ProcessDetailedInfo>();
         try
         {
-            var processes = Process.GetProcesses();
-            foreach (var p in processes)
+            foreach (var p in Process.GetProcesses())
             {
                 try
                 {
-                    var mem = p.WorkingSet64 / Mb;
-                    allProcs.Add(new ProcessDetailedInfo(p.Id, p.ProcessName, mem, 0, ""));
+                    var cpuTime = p.TotalProcessorTime;
+                    var cpu = 0d;
+                    if (_processCpu.TryGetValue(p.Id, out var previous))
+                    {
+                        var seconds = (now - previous.SampledAt).TotalSeconds;
+                        if (seconds > 0)
+                            cpu = Math.Clamp((cpuTime - previous.Cpu).TotalSeconds / (seconds * Environment.ProcessorCount) * 100, 0, 100);
+                    }
+
+                    _processCpu[p.Id] = (cpuTime, now);
+                    allProcs.Add(new ProcessDetailedInfo(
+                        p.Id,
+                        p.ProcessName,
+                        p.WorkingSet64 / Mb,
+                        cpu,
+                        "",
+                        Categorize(p.ProcessName),
+                        gpuUsage.TotalPercent.HasValue ? gpuUsage.ProcessPercent.GetValueOrDefault(p.Id) : null));
                 }
                 catch { }
+                finally { p.Dispose(); }
             }
         }
         catch { }
 
-        var sortedProcs = allProcs.OrderByDescending(p => p.MemoryMb).ToList();
-        var topProcs = sortedProcs.Take(8).Select(p => new ProcessUsage(p.Name, p.MemoryMb)).ToList();
+        var runningIds = allProcs.Select(p => p.Id).ToHashSet();
+        foreach (var staleId in _processCpu.Keys.Where(id => !runningIds.Contains(id)).ToArray())
+            _processCpu.Remove(staleId);
 
-        var cpu = ReadCpu();
+        var sortedProcs = allProcs.OrderByDescending(p => p.MemoryMb).ToList();
+        var topProcs = allProcs.OrderByDescending(p => p.CpuPercent).Take(8)
+            .Select(p => new ProcessUsage(p.Name, p.MemoryMb)).ToList();
         var diskUsed = drives.Sum(d => d.UsedGb);
         var diskTotal = drives.Sum(d => d.TotalGb);
 
@@ -49,81 +73,173 @@ public sealed class SystemMonitor
             totalGb,
             diskUsed,
             diskTotal,
-            cpu,
+            ReadCpu(),
             topProcs,
             drives,
-            sortedProcs);
+            sortedProcs,
+            gpuUsage.TotalPercent);
     }
 
     public bool TerminateProcess(int pid)
     {
         try
         {
-            var p = Process.GetProcessById(pid);
+            using var p = Process.GetProcessById(pid);
             p.Kill();
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
+    }
+
+    private static string Categorize(string name)
+    {
+        var process = name.ToLowerInvariant();
+        if (new[] { "chrome", "msedge", "firefox", "brave", "opera", "vivaldi", "safari" }.Any(process.Contains)) return "Browsing";
+        if (new[] { "steam", "game", "epic", "battle.net", "riot", "minecraft", "valorant", "unity", "unreal" }.Any(process.Contains)) return "Gaming";
+        if (new[] { "code", "devenv", "rider", "idea", "pycharm", "webstorm", "dotnet", "node", "python", "java", "git", "docker", "wsl" }.Any(process.Contains)) return "Development";
+        if (new[] { "system", "idle", "services", "svchost", "csrss", "wininit", "winlogon", "explorer", "dwm", "lsass", "registry", "kernel", "launchd", "kworker", "systemd" }.Any(process.Contains)) return "System";
+        return "Other";
     }
 
     private static (double TotalGb, double UsedGb) ReadMemory()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            const string memInfo = "/proc/meminfo";
-            if (File.Exists(memInfo))
+            var status = new MemoryStatusEx { Length = (uint)Marshal.SizeOf<MemoryStatusEx>() };
+            if (GlobalMemoryStatusEx(ref status))
+                return (status.TotalPhysical / Gb, (status.TotalPhysical - status.AvailablePhysical) / Gb);
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && File.Exists("/proc/meminfo"))
+        {
+            try
             {
-                try
+                var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                foreach (var line in File.ReadLines("/proc/meminfo"))
                 {
-                    var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var line in File.ReadLines(memInfo))
-                    {
-                        var parts = line.Split(':', 2);
-                        if (parts.Length == 2)
-                        {
-                            var key = parts[0].Trim();
-                            var valStr = parts[1].Trim().Split(' ')[0];
-                            if (double.TryParse(valStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var kb))
-                            {
-                                dict[key] = kb;
-                            }
-                        }
-                    }
-
-                    var totalKb = dict.GetValueOrDefault("MemTotal", 0);
-                    var availKb = dict.GetValueOrDefault("MemAvailable", 0);
-                    var usedKb = Math.Max(0, totalKb - availKb);
-
-                    return (totalKb / 1024d / 1024d, usedKb / 1024d / 1024d);
+                    var parts = line.Split(':', 2);
+                    if (parts.Length == 2 && double.TryParse(parts[1].Trim().Split(' ')[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var kb))
+                        dict[parts[0].Trim()] = kb;
                 }
-                catch { }
+                var totalKb = dict.GetValueOrDefault("MemTotal", 0);
+                var availKb = dict.GetValueOrDefault("MemAvailable", 0);
+                if (totalKb > 0) return (totalKb / 1024d / 1024d, Math.Max(0, totalKb - availKb) / 1024d / 1024d);
+            }
+            catch { }
+        }
+
+        var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Gb;
+        if (total <= 0) total = 16;
+        return (total, Math.Min(total, GC.GetTotalMemory(false) / Gb));
+    }
+
+    private double ReadCpu()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            if (GetSystemTimes(out var idle, out var kernel, out var user))
+            {
+                var current = (idle.ToUInt64(), kernel.ToUInt64(), user.ToUInt64());
+                var result = 0d;
+                if (_previousSystemTimes is { } previous)
+                {
+                    var total = (current.Item2 - previous.Kernel) + (current.Item3 - previous.User);
+                    var idleDelta = current.Item1 - previous.Idle;
+                    if (total > 0) result = Math.Clamp((double)(total - idleDelta) / total * 100, 0, 100);
+                }
+                _previousSystemTimes = current;
+                return result;
             }
         }
 
-        // Generic fallback using GC / Process
-        var total = 16.0; // Estimate
-        var used = GC.GetTotalMemory(false) / Gb;
-        return (total, used);
-    }
-
-    private static double ReadCpu()
-    {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             try
             {
-                var load = File.ReadLines("/proc/loadavg").FirstOrDefault()?.Split(' ')[0];
-                if (double.TryParse(load, NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
-                {
-                    return Math.Clamp((val / Environment.ProcessorCount) * 100.0, 0, 100);
-                }
+                var parts = File.ReadLines("/proc/stat").First().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var values = parts.Skip(1).Select(v => ulong.Parse(v, CultureInfo.InvariantCulture)).ToArray();
+                var idle = values[3] + (values.Length > 4 ? values[4] : 0);
+                var total = values.Aggregate(0UL, (sum, value) => sum + value);
+                var result = 0d;
+                if (_previousLinuxCpu is { } previous && total > previous.Total)
+                    result = Math.Clamp((double)((total - previous.Total) - (idle - previous.Idle)) / (total - previous.Total) * 100, 0, 100);
+                _previousLinuxCpu = (idle, total);
+                return result;
             }
             catch { }
         }
 
         return 0;
     }
+
+    private static GpuUsage ReadGpu()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return new GpuUsage(null, new Dictionary<int, double>());
+        IntPtr query = IntPtr.Zero, counter = IntPtr.Zero;
+        try
+        {
+            if (PdhOpenQueryW(null, IntPtr.Zero, out query) != 0) return new GpuUsage(null, new Dictionary<int, double>());
+            if (PdhAddEnglishCounterW(query, @"\GPU Engine(*)\Utilization Percentage", IntPtr.Zero, out counter) != 0) return new GpuUsage(null, new Dictionary<int, double>());
+            PdhCollectQueryData(query);
+            Thread.Sleep(80);
+            PdhCollectQueryData(query);
+            uint bytes = 0, count = 0;
+            var status = PdhGetFormattedCounterArrayW(counter, 0x00000200, ref bytes, ref count, IntPtr.Zero);
+            if (status != 0x800007D2 || bytes == 0) return new GpuUsage(null, new Dictionary<int, double>());
+            var buffer = Marshal.AllocHGlobal((int)bytes);
+            try
+            {
+                if (PdhGetFormattedCounterArrayW(counter, 0x00000200, ref bytes, ref count, buffer) != 0)
+                    return new GpuUsage(null, new Dictionary<int, double>());
+                var entrySize = Marshal.SizeOf<PdhFormattedCounterItem>();
+                var result = 0d;
+                var byProcess = new Dictionary<int, double>();
+                for (var i = 0; i < count; i++)
+                {
+                    var value = Marshal.PtrToStructure<PdhFormattedCounterItem>(IntPtr.Add(buffer, i * entrySize));
+                    if (value.Value.Status != 0) continue;
+                    var utilization = Math.Max(0, value.Value.DoubleValue);
+                    result += utilization;
+
+                    try
+                    {
+                        if (value.Name == IntPtr.Zero) continue;
+                        var instanceName = Marshal.PtrToStringUni(value.Name) ?? "";
+                        var pidStart = instanceName.IndexOf("pid_", StringComparison.OrdinalIgnoreCase);
+                        if (pidStart < 0) continue;
+                        pidStart += 4;
+                        var pidEnd = instanceName.IndexOf('_', pidStart);
+                        if (pidEnd <= pidStart || !int.TryParse(instanceName.AsSpan(pidStart, pidEnd - pidStart), out var pid)) continue;
+                        byProcess[pid] = byProcess.GetValueOrDefault(pid) + utilization;
+                    }
+                    catch { /* skip entries with bad name pointers */ }
+                }
+                return new GpuUsage(
+                    Math.Clamp(result, 0, 100),
+                    byProcess.ToDictionary(pair => pair.Key, pair => Math.Clamp(pair.Value, 0, 100)));
+            }
+            finally { Marshal.FreeHGlobal(buffer); }
+        }
+        catch { return new GpuUsage(null, new Dictionary<int, double>()); }
+        finally { if (query != IntPtr.Zero) PdhCloseQuery(query); }
+    }
+
+    private sealed record GpuUsage(double? TotalPercent, IReadOnlyDictionary<int, double> ProcessPercent);
+
+    [StructLayout(LayoutKind.Sequential)] private struct MemoryStatusEx
+    {
+        public uint Length, MemoryLoad;
+        public ulong TotalPhysical, AvailablePhysical, TotalPageFile, AvailablePageFile, TotalVirtual, AvailableVirtual, AvailableExtendedVirtual;
+    }
+    [StructLayout(LayoutKind.Sequential)] private struct PdhCounterValue { public uint Status; public double DoubleValue; }
+    [StructLayout(LayoutKind.Sequential)] private struct PdhFormattedCounterItem { public IntPtr Name; public PdhCounterValue Value; }
+
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx buffer);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetSystemTimes(out FileTime idle, out FileTime kernel, out FileTime user);
+    [StructLayout(LayoutKind.Sequential)] private struct FileTime { public uint Low, High; public ulong ToUInt64() => ((ulong)High << 32) | Low; }
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)] private static extern uint PdhOpenQueryW(string? dataSource, IntPtr userData, out IntPtr query);
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)] private static extern uint PdhAddEnglishCounterW(IntPtr query, string path, IntPtr userData, out IntPtr counter);
+    [DllImport("pdh.dll")] private static extern uint PdhCollectQueryData(IntPtr query);
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)] private static extern uint PdhGetFormattedCounterArrayW(IntPtr counter, uint format, ref uint bufferSize, ref uint itemCount, IntPtr items);
+    [DllImport("pdh.dll")] private static extern uint PdhCloseQuery(IntPtr query);
 }
