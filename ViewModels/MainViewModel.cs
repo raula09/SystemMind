@@ -15,7 +15,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly AdvisorService _advisor = new();
     private SystemSnapshot _snapshot = null!;
     private string _prompt = "";
-    private string _activeView = "StorageExplorer"; // Default to WinDirStat view!
+    private string _activeView = "Overview";
     private string _statusBanner = "";
     private bool _isAiThinking;
     private readonly DispatcherTimer _resourceTimer = new() { Interval = TimeSpan.FromSeconds(2) };
@@ -28,6 +28,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public CleanupViewModel Cleanup { get; }
     public PerformanceViewModel Performance { get; }
     public SettingsViewModel Settings { get; }
+    public AnomalyViewModel Anomalies { get; }
 
     public ObservableCollection<Recommendation> Recommendations { get; } = [];
     public ObservableCollection<ProcessRow> TopProcesses { get; } = [];
@@ -59,6 +60,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 OnChanged(nameof(IsCleanupActive));
                 OnChanged(nameof(IsPerformanceActive));
                 OnChanged(nameof(IsSettingsActive));
+                OnChanged(nameof(IsAnomaliesActive));
                 OnChanged(nameof(IsLiveResourcesActive));
                 OnChanged(nameof(IsCompatibilityActive));
             }
@@ -70,6 +72,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsCleanupActive => ActiveView == "Cleanup";
     public bool IsPerformanceActive => ActiveView == "Performance";
     public bool IsSettingsActive => ActiveView == "Settings";
+    public bool IsAnomaliesActive => ActiveView == "Anomalies";
     public bool IsLiveResourcesActive => ActiveView == "LiveResources";
     public bool IsCompatibilityActive => ActiveView == "Compatibility";
 
@@ -89,6 +92,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public bool HasStatusBanner => !string.IsNullOrEmpty(StatusBanner);
+    public bool HasMessages => Messages.Count > 0;
 
     public string MemoryHeadline => $"{_snapshot?.MemoryUsedGb:F1} / {_snapshot?.MemoryTotalGb:F1} GB";
     public string MemoryDetail => $"{MemoryPercent:F0}% in use";
@@ -150,7 +154,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Cleanup = new CleanupViewModel();
         Performance = new PerformanceViewModel();
         Settings = new SettingsViewModel();
-
+        Anomalies = new AnomalyViewModel(ExplainAnomalyAsync);
+        Messages.CollectionChanged += (_, _) => OnChanged(nameof(HasMessages));
         // Wire sub-view model events to AI and notifications
         StorageExplorer.RequestAiQuestion += q => _ = AskAsync(q);
         StorageExplorer.NotifyUser += msg => ShowBanner(msg);
@@ -166,12 +171,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         SendCommand = new AsyncCommand(_ => SendAsync());
         QuickAskCommand = new AsyncCommand(p => AskAsync(p?.ToString() ?? ""));
         SetViewCommand = new RelayCommand(p => { if (p is string view) ActiveView = view; });
-        ClearChatCommand = new RelayCommand(() =>
-        {
-            Messages.Clear();
-            Messages.Add(new ChatMessage("SystemMind", "Chat history cleared. How can I help you inspect or optimize your system?", "#132C3B", HorizontalAlignment.Left));
-        });
-
+        ClearChatCommand = new RelayCommand(() => Messages.Clear());
         Refresh();
         _resourceTimer.Tick += (_, _) =>
         {
@@ -183,15 +183,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         // Automatically start background scan of Root directory (/) on startup
         _ = StorageExplorer.StartScanAsync();
 
-        Messages.Add(new ChatMessage(
-            "SystemMind",
-            "👋 Welcome! I'm your AI System & Storage Advisor.\n\n" +
-            "• **Storage Explorer**: Scanning your entire root filesystem (`/`) to show every file and folder in a full WinDirStat-style treemap.\n" +
-            "• **Cleanup Assistant**: Detects caches, junk files, and large dev artifacts.\n" +
-            "• **Performance**: Live process manager.\n\n" +
-            "I am currently scanning the entire root filesystem (`/`) in the background so you can immediately inspect all disk space hogs across the whole system!",
-            "#132C3B",
-            HorizontalAlignment.Left));
+        // Messages.Add(new ChatMessage(
+        //     "SystemMind",
+        //     "👋 Welcome! I'm your AI System & Storage Advisor.\n\n" +
+        //     "• **Storage Explorer**: Scanning your entire root filesystem (`/`) to show every file and folder in a full WinDirStat-style treemap.\n" +
+        //     "• **Cleanup Assistant**: Detects caches, junk files, and large dev artifacts.\n" +
+        //     "• **Performance**: Live process manager.\n\n" +
+        //     "I am currently scanning the entire root filesystem (`/`) in the background so you can immediately inspect all disk space hogs across the whole system!",
+        //     "#132C3B",
+        //     HorizontalAlignment.Left));
     }
 
     public void ShowBanner(string msg)
@@ -203,7 +203,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         });
     }
 
-    public void StopMonitoring() => _resourceTimer.Stop();
+    public void StopMonitoring()
+    {
+        _resourceTimer.Stop();
+        Anomalies.Dispose();
+    }
 
     private void Refresh()
     {
@@ -453,6 +457,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
             IsAiThinking = false;
         }
     }
+
+    private Task<string> ExplainAnomalyAsync(AnomalyRecord record) => _advisor.AskAsync(
+        $"Explain this Windows system event in plain language. State what it means, the likely causes supported by the event, and one or two safe next checks. Do not claim certainty.\n\n" +
+        $"Category: {record.CategoryLabel}\nTitle: {record.Title}\nSource: {record.Source}\nTime: {record.TimestampUtc.ToLocalTime():g}\nDetails: {record.Details}\nRaw event: {record.RawMessage}",
+        _snapshot,
+        StorageExplorer.RootNode,
+        StorageExplorer.Extensions.ToList(),
+        StorageExplorer.IsScanning,
+        StorageExplorer.ScanPath,
+        StorageExplorer.TotalFilesScanned,
+        StorageExplorer.TotalBytesScanned);
 
     private void OnChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

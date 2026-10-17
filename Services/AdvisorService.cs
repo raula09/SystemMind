@@ -8,20 +8,13 @@ namespace SystemMind.Services;
 
 public sealed class AdvisorService
 {
-    // Gemini 3.8 may spend more than 20 seconds reasoning before it streams a response.
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(90) };
 
     private static readonly string[] OpenRouterFallbackModels =
     [
-        "openai/gpt-4o-mini",
-        "google/gemini-3.8-flash",
-        "openai/gpt-4.1",
-        "nvidia/nemotron-3.5-super-vl:free"
-    ];
 
-    private static readonly string[] GeminiFallbackModels =
-    [
-        "gemini-3.8-flash"
+        "meta-llama/llama-3.3-70b:free",
+        "google/gemma-4:free"
     ];
 
     private static bool IsKnownBrokenModel(string? model)
@@ -45,61 +38,29 @@ public sealed class AdvisorService
     {
         EnvLoader.Load();
 
-        var openAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
         var openRouterKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
-        var geminiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
-            ?? Environment.GetEnvironmentVariable("GOOGLE_API_KEY")
-            ?? Environment.GetEnvironmentVariable("apiKey");
-        var key = GetApiKey();
+        var key = openRouterKey;
 
-        // If no cloud key, use our rich local expert engine
+        // Work offline with the same scan and telemetry context when no cloud model is configured.
         if (string.IsNullOrWhiteSpace(key))
         {
-            return "### ⚠️ AI not configured\n\nAdd a valid Gemini/OpenRouter key in Settings or `.env` to enable live responses.";
+            return LocalExpertAnswer(question, snapshot, scannedRoot, extensions, isScanning, currentScanPath, scannedFiles, scannedBytes);
         }
 
-        var isCustomEndpoint = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AI_API_ENDPOINT"));
-        var provider = GetProviderName(
-            isCustomEndpoint ? Environment.GetEnvironmentVariable("AI_API_ENDPOINT")! : "",
-            openAiKey,
-            openRouterKey,
-            geminiKey);
-
-        var endpoint = isCustomEndpoint
-            ? Environment.GetEnvironmentVariable("AI_API_ENDPOINT")!
-            : provider == "gemini"
-                ? "https://generativelanguage.googleapis.com/v1beta/models"
-                : provider == "openai"
-                    ? "https://api.openai.com/v1/chat/completions"
-                    : "https://openrouter.ai/api/v1/chat/completions";
-
-        var configuredModel = Environment.GetEnvironmentVariable("AI_MODEL") ??
-            (provider == "gemini" ? "gemini-3.8-flash" : provider == "openai" ? "gpt-4o-mini" : "openai/gpt-4o-mini");
+        const string endpoint = "https://openrouter.ai/api/v1/chat/completions";
+        var configuredModel = Environment.GetEnvironmentVariable("AI_MODEL") ?? "google/gemma-4:free";
 
         if (string.IsNullOrWhiteSpace(configuredModel) || IsKnownBrokenModel(configuredModel))
         {
-            configuredModel = provider == "gemini" ? "gemini-3.8-flash" : provider == "openai" ? "gpt-4o-mini" : "openai/gpt-4o-mini";
+            configuredModel = "google/gemma-4:free";
         }
 
         var modelsToTry = new List<string> { configuredModel };
-        if (provider == "gemini")
+        foreach (var fb in OpenRouterFallbackModels)
         {
-            foreach (var fb in GeminiFallbackModels)
+            if (!modelsToTry.Contains(fb, StringComparer.OrdinalIgnoreCase))
             {
-                if (!modelsToTry.Contains(fb, StringComparer.OrdinalIgnoreCase))
-                {
-                    modelsToTry.Add(fb);
-                }
-            }
-        }
-        else if (endpoint.Contains("openrouter.ai"))
-        {
-            foreach (var fb in OpenRouterFallbackModels)
-            {
-                if (!modelsToTry.Contains(fb, StringComparer.OrdinalIgnoreCase))
-                {
-                    modelsToTry.Add(fb);
-                }
+                modelsToTry.Add(fb);
             }
         }
 
@@ -115,10 +76,10 @@ public sealed class AdvisorService
         {
             try
             {
-                var responseText = await CallChatApiAsync(endpoint, key, model, systemPrompt, question, provider);
+                var responseText = await CallChatApiAsync(endpoint, key, model, systemPrompt, question);
                 if (!string.IsNullOrWhiteSpace(responseText))
                 {
-                    return FormatFriendlyResponse(ShortenToKeyPoints(responseText));
+                    return FormatFriendlyResponse(responseText);
                 }
             }
             catch
@@ -128,65 +89,11 @@ public sealed class AdvisorService
         }
 
         // If all cloud calls failed or rate-limited, fail honestly instead of serving canned text.
-        return "### ⚠️ AI provider unavailable\n\nThe live model is failing right now. Try again in a moment or switch to another provider/model.";
+        return "### ⚠️ OpenRouter unavailable\n\nThe configured OpenRouter model is not responding right now. Try again in a moment or choose another OpenRouter model.";
     }
 
-    private async Task<string> CallChatApiAsync(string endpoint, string apiKey, string model, string systemPrompt, string userPrompt, string provider)
+    private async Task<string> CallChatApiAsync(string endpoint, string apiKey, string model, string systemPrompt, string userPrompt)
     {
-        if (provider == "gemini")
-        {
-            var geminiEndpoint = $"{endpoint.TrimEnd('/')}/{model}:generateContent?key={apiKey}";
-
-            var geminiPayload = new
-            {
-                system_instruction = new { parts = new[] { new { text = systemPrompt } } },
-                contents = new[]
-                {
-                    new { role = "user", parts = new[] { new { text = userPrompt } } }
-                },
-                generationConfig = new
-                {
-                    temperature = 0.25,
-                    topP = 0.9,
-                    maxOutputTokens = 1200
-                }
-            };
-
-            using var geminiRequest = new HttpRequestMessage(HttpMethod.Post, geminiEndpoint);
-            geminiRequest.Content = new StringContent(JsonSerializer.Serialize(geminiPayload), Encoding.UTF8, "application/json");
-
-            var geminiResponse = await _http.SendAsync(geminiRequest);
-            var geminiRawJson = await geminiResponse.Content.ReadAsStringAsync();
-
-            if (!geminiResponse.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException($"Gemini API request failed with status {(int)geminiResponse.StatusCode}: {geminiRawJson}");
-            }
-
-            using var geminiDoc = JsonDocument.Parse(geminiRawJson);
-            var geminiRoot = geminiDoc.RootElement;
-            if (geminiRoot.TryGetProperty("candidates", out var candidates) &&
-                candidates.ValueKind == JsonValueKind.Array &&
-                candidates.GetArrayLength() > 0)
-            {
-                var candidate = candidates[0];
-                if (candidate.TryGetProperty("content", out var content) &&
-                    content.TryGetProperty("parts", out var parts) &&
-                    parts.ValueKind == JsonValueKind.Array && parts.GetArrayLength() > 0)
-                {
-                    foreach (var part in parts.EnumerateArray())
-                    {
-                        if (part.TryGetProperty("text", out var text))
-                        {
-                            return text.GetString() ?? "";
-                        }
-                    }
-                }
-            }
-
-            return string.Empty;
-        }
-
         var payload = new
         {
             model = model,
@@ -196,7 +103,7 @@ public sealed class AdvisorService
                 new { role = "user", content = userPrompt }
             },
             max_tokens = 1200,
-            temperature = 0.25,
+            temperature = 0.15,
             top_p = 0.9,
             frequency_penalty = 0.2,
             presence_penalty = 0.1
@@ -204,11 +111,8 @@ public sealed class AdvisorService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        if (endpoint.Contains("openrouter.ai"))
-        {
-            request.Headers.Add("HTTP-Referer", "https://github.com/SystemMind");
-            request.Headers.Add("X-Title", "SystemMind Storage Advisor");
-        }
+        request.Headers.Add("HTTP-Referer", "https://github.com/SystemMind");
+        request.Headers.Add("X-Title", "SystemMind Storage Advisor");
 
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
@@ -257,11 +161,11 @@ public sealed class AdvisorService
         long scannedBytes = 0)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("You are SystemMind AI, an intelligent storage advisor and system copilot for a Linux desktop.");
-        sb.AppendLine("Give concise, direct, practical, and safe advice with markdown headings and bullet points.");
-        sb.AppendLine("Base your guidance on the live system telemetry and scan data provided. Never invent file scans or system state that is not present.");
-        sb.AppendLine("Prefer precise, actionable guidance over generic chat responses. Be careful not to recommend deleting critical system files, boot files, or user data without a warning.");
-        sb.AppendLine("For game compatibility, mention uncertainty and ask for specs when needed.");
+        sb.AppendLine("You are SystemMind, a precise Linux desktop storage and performance copilot.");
+        sb.AppendLine("Answer the user's actual question first. Do not give a generic system overview, repeat the telemetry, or describe the app unless that directly answers the question.");
+        sb.AppendLine("Treat the context below as the only source of truth about this computer. Never invent paths, scan results, hardware specifications, process ownership, completed actions, or measurements.");
+        sb.AppendLine("Use exact values and paths from the context when they are relevant. If the data needed to answer is absent, say what is missing in one sentence and ask one focused follow-up question.");
+        sb.AppendLine("Recommend only safe, reversible actions by default. Clearly label anything destructive or irreversible and do not claim an action was performed.");
         sb.AppendLine();
         sb.AppendLine("CURRENT SYSTEM TELEMETRY:");
         sb.AppendLine($"- RAM: {s.MemoryUsedGb:F1}/{s.MemoryTotalGb:F1} GB ({s.MemoryPercent:F0}% in use)");
@@ -308,13 +212,14 @@ public sealed class AdvisorService
         }
 
         sb.AppendLine();
-        sb.AppendLine("RESPONDER STYLE:");
-        sb.AppendLine("- Start with a brief verdict or summary.");
-        sb.AppendLine("- Give 2–5 highly actionable recommendations.");
-        sb.AppendLine("- Call out risk areas like storage pressure, RAM pressure, or cleanup of caches.");
-        sb.AppendLine("- If the user asks for a game name, repo, or large folder, answer with the most likely visible folder from the current scan instead of saying you cannot tell.");
-        sb.AppendLine("- If there is no strong evidence, say so clearly and avoid speculation.");
-        sb.AppendLine("- Keep it helpful, technical, and confidence-based, not fluffy.");
+        sb.AppendLine("RESPONSE CONTRACT:");
+        sb.AppendLine("- Start with a one- or two-sentence direct answer; use a short markdown heading only when it improves scanning.");
+        sb.AppendLine("- Then provide at most 4 concrete next steps or supporting facts. Each item must be relevant to the question.");
+        sb.AppendLine("- For storage questions, name the largest relevant visible folders/files and their sizes; do not suggest generic cleanup before discussing the scan evidence.");
+        sb.AppendLine("- For RAM/CPU/GPU questions, identify the relevant measured metric and named process first; do not diagnose a cause that telemetry cannot prove.");
+        sb.AppendLine("- For compatibility questions, separate known facts from unknown requirements. Never say a game will run without its target requirements and the relevant CPU/GPU details.");
+        sb.AppendLine("- If a scan is in progress, distinguish discovered-so-far data from a completed result.");
+        sb.AppendLine("- Avoid filler, emojis, marketing language, repeated warnings, and canned closing questions.");
 
         return sb.ToString();
     }
@@ -376,7 +281,7 @@ public sealed class AdvisorService
         }
 
         // 2. Storage / WinDirStat scan breakdown queries
-        if (q.Contains("space") || q.Contains("taking") || q.Contains("eating") || q.Contains("storage") || q.Contains("breakdown") || q.Contains("windirstat") || q.Contains("scan") || q.Contains("game") || q.Contains("holds") || q.Contains("largest"))
+        if (q.Contains("space") || q.Contains("taking") || q.Contains("eating") || q.Contains("storage") || q.Contains("breakdown") || q.Contains("windirstat") || q.Contains("scan") || q.Contains("holds") || q.Contains("largest") || (q.Contains("game") && scanRoot != null))
         {
             if (scanRoot != null && scanRoot.Size > 0)
             {
@@ -640,32 +545,6 @@ public sealed class AdvisorService
         builder.AppendLine();
         builder.AppendLine("These are low-risk cleanup targets and can be removed after a quick review.");
         return builder.ToString();
-    }
-
-    private static string? GetApiKey()
-    {
-        return Environment.GetEnvironmentVariable("GEMINI_API_KEY")
-            ?? Environment.GetEnvironmentVariable("GOOGLE_API_KEY")
-            ?? Environment.GetEnvironmentVariable("apiKey")
-            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-            ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
-    }
-
-    private static string GetProviderName(string endpoint, string? openAiKey, string? openRouterKey, string? geminiKey)
-    {
-        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AI_API_ENDPOINT")))
-            return "custom";
-
-        if (!string.IsNullOrWhiteSpace(geminiKey) || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GEMINI_API_KEY")) || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GOOGLE_API_KEY")) || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("apiKey")) || endpoint.Contains("generativelanguage.googleapis.com", StringComparison.OrdinalIgnoreCase))
-            return "gemini";
-
-        if (!string.IsNullOrWhiteSpace(openAiKey) || endpoint.Contains("api.openai.com", StringComparison.OrdinalIgnoreCase))
-            return "openai";
-
-        if (!string.IsNullOrWhiteSpace(openRouterKey) || endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase))
-            return "openrouter";
-
-        return "local";
     }
 
     private static string ShortenToKeyPoints(string raw)

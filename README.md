@@ -27,7 +27,7 @@ SystemMind is a native cross-platform disk usage analyzer and system manager bui
 ### 2. 🤖 AI System & Storage Copilot
 - **Scan-Aware Reasoning**: When a scan completes, the AI receives full context: scanned path, total size, top 5 largest directories, top 5 largest files, top file extensions, and detected junk candidates.
 - **Dual-Engine AI Architecture**:
-  - **Cloud AI (OpenRouter & OpenAI)**: Supports standard `/v1/chat/completions` API with streaming models like `google/gemma-4-31b-it:free`, `gpt-4o-mini`, etc. Automatic `.env` loading on startup.
+  - **Cloud AI (OpenRouter)**: Supports OpenRouter chat-completion models with automatic `.env` loading on startup.
   - **Local Expert Storage Engine**: 100% offline, privacy-friendly heuristic intelligence that answers storage breakdown queries, explains unknown folders (`node_modules`, `~/.cache`, `~/.local`), diagnoses memory pressure, and creates tailored cleanup plans even without internet or API keys.
 - **Quick Action Prompts**:
   - *"What is taking up all my space? Break down the scan."*
@@ -65,10 +65,10 @@ dotnet test SystemMind.Tests/SystemMind.Tests.csproj
 ```
 
 ### Enable Cloud AI (Optional)
-To use OpenRouter or OpenAI, add your key to `.env` in the project root:
+To use OpenRouter, add your key to `.env` in the project root:
 ```env
 OPENROUTER_API_KEY=sk-or-v1-...
-AI_MODEL=google/gemma-4-31b-it:free
+AI_MODEL=meta-llama/llama-3.3-70b:free
 ```
 Or configure keys directly in the in-app **Settings** tab. If no key is set or if rate limits are reached, SystemMind seamlessly switches to its built-in **Local Expert Storage Engine**.
 

@@ -7,32 +7,18 @@ namespace SystemMind.ViewModels;
 
 public sealed class SettingsViewModel : INotifyPropertyChanged
 {
-    private string _openAiKey = "";
     private string _openRouterKey = "";
-    private string _customEndpoint = "";
-    private string _selectedModel = "google/gemma-4-31b-it:free";
+    private string _selectedModel = "meta-llama/llama-3.3-70b:free";
     private bool _safeMode = true;
     private string _statusMessage = "Configuration loaded";
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action<string>? NotifyUser;
 
-    public string OpenAiKey
-    {
-        get => _openAiKey;
-        set { if (_openAiKey != value) { _openAiKey = value; OnChanged(); } }
-    }
-
     public string OpenRouterKey
     {
         get => _openRouterKey;
         set { if (_openRouterKey != value) { _openRouterKey = value; OnChanged(); } }
-    }
-
-    public string CustomEndpoint
-    {
-        get => _customEndpoint;
-        set { if (_customEndpoint != value) { _customEndpoint = value; OnChanged(); } }
     }
 
     public string SelectedModel
@@ -66,10 +52,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public void Load()
     {
         EnvLoader.Load();
-        OpenAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
         OpenRouterKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "";
-        CustomEndpoint = Environment.GetEnvironmentVariable("AI_API_ENDPOINT") ?? "";
-        SelectedModel = Environment.GetEnvironmentVariable("AI_MODEL") ?? "google/gemma-4-31b-it:free";
+        SelectedModel = Environment.GetEnvironmentVariable("AI_MODEL") ?? "meta-llama/llama-3.3-70b:free";
         StatusMessage = "Settings loaded from environment and .env";
     }
 
@@ -77,9 +61,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     {
         try
         {
-            Environment.SetEnvironmentVariable("OPENAI_API_KEY", string.IsNullOrWhiteSpace(OpenAiKey) ? null : OpenAiKey.Trim());
             Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", string.IsNullOrWhiteSpace(OpenRouterKey) ? null : OpenRouterKey.Trim());
-            Environment.SetEnvironmentVariable("AI_API_ENDPOINT", string.IsNullOrWhiteSpace(CustomEndpoint) ? null : CustomEndpoint.Trim());
             Environment.SetEnvironmentVariable("AI_MODEL", string.IsNullOrWhiteSpace(SelectedModel) ? null : SelectedModel.Trim());
 
             // Write or update local .env file
@@ -88,10 +70,6 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
 
             if (!string.IsNullOrWhiteSpace(OpenRouterKey))
                 lines.Add($"OPENROUTER_API_KEY={OpenRouterKey.Trim()}");
-            if (!string.IsNullOrWhiteSpace(OpenAiKey))
-                lines.Add($"OPENAI_API_KEY={OpenAiKey.Trim()}");
-            if (!string.IsNullOrWhiteSpace(CustomEndpoint))
-                lines.Add($"AI_API_ENDPOINT={CustomEndpoint.Trim()}");
             if (!string.IsNullOrWhiteSpace(SelectedModel))
                 lines.Add($"AI_MODEL={SelectedModel.Trim()}");
 
