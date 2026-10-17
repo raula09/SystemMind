@@ -1,0 +1,50 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SystemMind.ViewModels"
+        x:Class="SystemMind.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Width="1440" Height="900" MinWidth="1050" MinHeight="720"
+        Background="#071019" Title="SystemMind">
+  <Window.Styles>
+    <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="24"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="#101C2A"/><Setter Property="CornerRadius" Value="16"/><Setter Property="Padding" Value="20"/></Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#91A1B5"/></Style>
+    <Style Selector="ProgressBar"><Setter Property="Height" Value="8"/><Setter Property="Foreground" Value="#4FE0B0"/><Setter Property="Background" Value="#1C3041"/></Style>
+    <Style Selector="Button"><Setter Property="CornerRadius" Value="9"/><Setter Property="Padding" Value="14,8"/></Style>
+  </Window.Styles>
+  <Grid ColumnDefinitions="210,*,380">
+    <Border Background="#0B1521" Padding="18">
+      <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="10" Margin="4,4,0,32">
+          <Border Background="#35D3A0" CornerRadius="9" Width="32" Height="32"><TextBlock Text="S" FontWeight="Bold" FontSize="18" Foreground="#061019" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+          <TextBlock Text="SystemMind" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold"/>
+        </StackPanel>
+        <Button Content="Overview" HorizontalContentAlignment="Left" Background="#19384A"/>
+        <Button Content="Storage explorer" HorizontalContentAlignment="Left" Background="Transparent"/>
+        <Button Content="Performance" HorizontalContentAlignment="Left" Background="Transparent"/>
+        <Button Content="Compatibility" HorizontalContentAlignment="Left" Background="Transparent"/>
+        <TextBlock Text="TOOLS" Classes="muted" FontSize="11" Margin="12,28,0,5"/>
+        <Button Content="Cleanup assistant" HorizontalContentAlignment="Left" Background="Transparent"/>
+        <Button Content="Settings" HorizontalContentAlignment="Left" Background="Transparent"/>
+        <StackPanel VerticalAlignment="Bottom" Margin="0,120,0,0">
+          <Border Background="#132638" CornerRadius="12" Padding="12"><StackPanel Spacing="4"><TextBlock Text="AI system advisor" FontWeight="SemiBold"/><TextBlock Text="Uses your live system snapshot" Classes="muted" FontSize="11"/></StackPanel></Border>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+    <ScrollViewer Grid.Column="1" Padding="34,28">
+      <StackPanel Spacing="22">
+        <Grid ColumnDefinitions="*,Auto"><StackPanel><TextBlock Text="Good {Binding Greeting}" Classes="muted"/><TextBlock Text="Your system, explained." Classes="title"/><TextBlock Text="Live health signals and practical ways to make room." Classes="muted" Margin="0,5,0,0"/></StackPanel><Border Background="#0F2731" CornerRadius="12" Padding="13,8" VerticalAlignment="Top"><StackPanel Orientation="Horizontal" Spacing="8"><Ellipse Width="8" Height="8" Fill="#45D6A5" VerticalAlignment="Center"/><TextBlock Text="Live monitoring"/></StackPanel></Border></Grid>
+        <Grid ColumnDefinitions="*,*,*">
+          <Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="MEMORY" Classes="muted" FontSize="11"/><TextBlock Text="{Binding MemoryHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding MemoryPercent}" Maximum="100"/><TextBlock Text="{Binding MemoryDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
+          <Border Grid.Column="1" Classes="card"><StackPanel Spacing="10"><TextBlock Text="STORAGE" Classes="muted" FontSize="11"/><TextBlock Text="{Binding StorageHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding StoragePercent}" Maximum="100" Foreground="#7BA7FF"/><TextBlock Text="{Binding StorageDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
+          <Border Grid.Column="2" Classes="card"><StackPanel Spacing="10"><TextBlock Text="CPU LOAD" Classes="muted" FontSize="11"/><TextBlock Text="{Binding CpuHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#F6B75D"/><TextBlock Text="{Binding CpuDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
+        </Grid>
+        <Border Classes="card"><StackPanel Spacing="16"><Grid ColumnDefinitions="*,Auto"><StackPanel><TextBlock Text="What needs your attention" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="Recommendations based on your current system state." Classes="muted" FontSize="12"/></StackPanel><Button Content="Refresh" Command="{Binding RefreshCommand}"/></Grid><ItemsControl ItemsSource="{Binding Recommendations}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#0B1622" CornerRadius="10" Padding="14" Margin="0,0,0,8"><Grid ColumnDefinitions="8,*,Auto"><Border Background="{Binding Accent}" CornerRadius="4"/><StackPanel Grid.Column="1" Spacing="3" Margin="12,0,0,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/><TextBlock Text="{Binding Detail}" Classes="muted" TextWrapping="Wrap" FontSize="12"/></StackPanel><TextBlock Grid.Column="2" Text="{Binding Impact}" Foreground="#A8C8FF" VerticalAlignment="Center"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
+        <Grid ColumnDefinitions="*,*"><Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="Top memory users" FontSize="18" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding TopProcesses}"><ItemsControl.ItemTemplate><DataTemplate><Grid ColumnDefinitions="*,Auto" Margin="0,5"><TextBlock Text="{Binding Name}"/><TextBlock Grid.Column="1" Text="{Binding Memory}" Classes="muted"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border><Border Grid.Column="1" Classes="card" Margin="14,0,0,0"><StackPanel Spacing="10"><TextBlock Text="Storage map" FontSize="18" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding DiskItems}"><ItemsControl.ItemTemplate><DataTemplate><StackPanel Margin="0,4"><Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Name}"/><TextBlock Grid.Column="1" Text="{Binding Value}" Classes="muted"/></Grid><ProgressBar Value="{Binding Percent}" Maximum="100" Margin="0,5,0,0"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border></Grid>
+      </StackPanel>
+    </ScrollViewer>
+    <Border Grid.Column="2" Background="#0B1521" BorderBrush="#1A2A3A" BorderThickness="1,0,0,0" Padding="20">
+      <Grid RowDefinitions="Auto,*,Auto"><StackPanel Spacing="4"><TextBlock Text="SystemMind AI" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="Ask about your system in plain English" Classes="muted" FontSize="12"/></StackPanel><ScrollViewer Grid.Row="1" Margin="0,20"><ItemsControl ItemsSource="{Binding Messages}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="{Binding Background}" CornerRadius="12" Padding="12" Margin="0,0,0,10" HorizontalAlignment="{Binding Alignment}"><StackPanel Spacing="4"><TextBlock Text="{Binding Author}" FontSize="11" FontWeight="SemiBold" Foreground="#72DDBB"/><TextBlock Text="{Binding Text}" TextWrapping="Wrap"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer><StackPanel Grid.Row="2" Spacing="10"><WrapPanel><Button Content="Why is RAM high?" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?" Margin="0,0,6,6"/><Button Content="Free storage" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up?" Margin="0,0,6,6"/><Button Content="Can I run a game?" Command="{Binding QuickAskCommand}" CommandParameter="Can this computer run a modern game?"/></WrapPanel><Grid ColumnDefinitions="*,Auto"><TextBox Text="{Binding Prompt}" Watermark="Ask your system advisor…" AcceptsReturn="True" MinHeight="44" TextWrapping="Wrap"/><Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}" Background="#35C998" Foreground="#061019" Margin="8,0,0,0"/></Grid><TextBlock Text="Set OPENAI_API_KEY to enable AI answers. Local advice works without it." Classes="muted" FontSize="10"/></StackPanel></Grid>
+    </Border>
+  </Grid>
+</Window>
