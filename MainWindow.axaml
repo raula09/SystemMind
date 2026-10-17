@@ -6,279 +6,948 @@
         x:Class="SystemMind.MainWindow"
         x:DataType="vm:MainViewModel"
         Width="1480" Height="920" MinWidth="1100" MinHeight="750"
-        Background="#111315" Title="SystemMind">
+        Background="#14171B"
+        Foreground="#E6E8EB"
+        FontFamily="avares://Avalonia.Fonts.Inter/Assets#Inter"
+        FontSize="12"
+        Title="SystemMind">
 
   <Window.Styles>
-    <!-- Compact, utility-first visual language inspired by desktop system monitors. -->
-    <Style Selector="TextBlock"><Setter Property="FontFamily" Value="avares://Avalonia.Fonts.Inter/Assets#Inter"/><Setter Property="Foreground" Value="#E7E9EC"/></Style>
-    <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="24"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="LetterSpacing" Value="-0.4"/></Style>
-    <Style Selector="Border.card">
-      <Setter Property="Background" Value="#1A1D20"/><Setter Property="BorderBrush" Value="#2A2E33"/><Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="16"/>
+    <!--
+      Tokens
+        content  #14171B   sidebar #1A1D22   card #1E2228   inset #171A1E
+        line     #2A2F36   text #E6E8EB      muted #8A929C  dim #5E6670
+        blue     #4D96F0   orange #F2994A    green #3FCF6B  red #FF5F57
+        yellow   #F5C84C   purple #B65CF0
+    -->
+
+    <!-- ============ TYPOGRAPHY ============ -->
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#8A929C"/></Style>
+    <Style Selector="TextBlock.dim"><Setter Property="Foreground" Value="#5E6670"/></Style>
+    <Style Selector="TextBlock.eyebrow">
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Foreground" Value="#7B848E"/>
     </Style>
-    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#98A1AA"/></Style>
-    <Style Selector="ProgressBar"><Setter Property="Height" Value="5"/><Setter Property="Foreground" Value="#4D9DE0"/><Setter Property="Background" Value="#30353B"/><Setter Property="CornerRadius" Value="2"/></Style>
-    <Style Selector="Button"><Setter Property="CornerRadius" Value="6"/><Setter Property="Padding" Value="11,7"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FontFamily" Value="avares://Avalonia.Fonts.Inter/Assets#Inter"/></Style>
+    <Style Selector="TextBlock.h1">
+      <Setter Property="FontSize" Value="20"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="LetterSpacing" Value="-0.3"/>
+    </Style>
+    <Style Selector="TextBlock.cardtitle">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#F0F2F4"/>
+    </Style>
+    <Style Selector="TextBlock.num">
+      <Setter Property="FontFamily" Value="Cascadia Mono, JetBrains Mono, Menlo, Consolas, monospace"/>
+    </Style>
+    <Style Selector="TextBlock.big">
+      <Setter Property="FontFamily" Value="Cascadia Mono, JetBrains Mono, Menlo, Consolas, monospace"/>
+      <Setter Property="FontSize" Value="24"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="LetterSpacing" Value="-0.6"/>
+    </Style>
+
+    <!-- ============ SURFACES ============ -->
+    <Style Selector="Border.panel">
+      <Setter Property="Background" Value="#1E2228"/>
+      <Setter Property="BorderBrush" Value="#2A2F36"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="16"/>
+    </Style>
+    <!-- Fixed card dimensions let the dashboard wrap cleanly at any window width. -->
+    <Style Selector="Border.dashboard-card">
+      <Setter Property="Width" Value="260"/>
+      <Setter Property="Height" Value="280"/>
+      <Setter Property="Margin" Value="0,0,12,12"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style Selector="Border.inset">
+      <Setter Property="Background" Value="#171A1E"/>
+      <Setter Property="BorderBrush" Value="#2A2F36"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <!-- ============ BUTTONS ============ -->
+    <Style Selector="Button">
+      <Setter Property="Background" Value="#262B32"/>
+      <Setter Property="BorderBrush" Value="#323841"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="#DADEE3"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="12,6"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2E343C"/>
+      <Setter Property="BorderBrush" Value="#3C434D"/>
+    </Style>
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#20252B"/>
+    </Style>
+    <Style Selector="Button:disabled"><Setter Property="Opacity" Value="0.4"/></Style>
+
+    <Style Selector="Button.sm"><Setter Property="Padding" Value="9,4"/><Setter Property="FontSize" Value="11"/></Style>
+
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#4D96F0"/>
+      <Setter Property="BorderBrush" Value="#4D96F0"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#6AABF5"/>
+      <Setter Property="BorderBrush" Value="#6AABF5"/>
+    </Style>
+    <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#3C84DC"/>
+    </Style>
+
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#32191B"/>
+      <Setter Property="BorderBrush" Value="#613034"/>
+      <Setter Property="Foreground" Value="#FF8D87"/>
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#42211F"/>
+      <Setter Property="BorderBrush" Value="#82403F"/>
+    </Style>
+
+    <Style Selector="Button.chip">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="#323841"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="11,4"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="#A2AAB3"/>
+    </Style>
+    <Style Selector="Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1F2B3A"/>
+      <Setter Property="BorderBrush" Value="#3A6BA8"/>
+    </Style>
+
+    <Style Selector="Button.tile">
+      <Setter Property="Background" Value="#171A1E"/>
+      <Setter Property="BorderBrush" Value="#2A2F36"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="12,10"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.tile:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1D2630"/>
+      <Setter Property="BorderBrush" Value="#3A6BA8"/>
+    </Style>
+
+    <!-- Sidebar navigation (macOS source-list look) -->
     <Style Selector="Button.nav">
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="#AEB5BD"/>
-      <Setter Property="Padding" Value="12,9"/>
-      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Foreground" Value="#B4BBC3"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#22262C"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     <Style Selector="Button.nav-active">
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
-      <Setter Property="Background" Value="#25384A"/>
-      <Setter Property="BorderBrush" Value="#4D9DE0"/>
-      <Setter Property="BorderThickness" Value="2,0,0,0"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="Background" Value="#2D3239"/>
+      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Foreground" Value="#FFFFFF"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Padding" Value="10,9"/>
-      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="FontSize" Value="12"/>
     </Style>
-    <Style Selector="Button.action-primary">
-      <Setter Property="Background" Value="#4D9DE0"/>
+    <Style Selector="Button.nav-active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2D3239"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.iconbtn">
+      <Setter Property="Background" Value="#22262C"/>
+      <Setter Property="BorderBrush" Value="#2E333A"/>
+      <Setter Property="Padding" Value="8,5"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <Style Selector="ToggleButton">
+      <Setter Property="Background" Value="#262B32"/>
+      <Setter Property="BorderBrush" Value="#323841"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="#DADEE3"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="12,6"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="ToggleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2E343C"/>
+      <Setter Property="BorderBrush" Value="#3C434D"/>
+    </Style>
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1F2B3A"/>
+      <Setter Property="BorderBrush" Value="#3A6BA8"/>
       <Setter Property="Foreground" Value="#FFFFFF"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
-    <Style Selector="Button.action-danger">
-      <Setter Property="Background" Value="#B94A4A"/>
-      <Setter Property="Foreground" Value="#FFFFFF"/>
-    </Style>
+
+    <!-- ============ INPUTS ============ -->
     <Style Selector="TextBox">
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="Background" Value="#14171A"/>
-      <Setter Property="BorderBrush" Value="#343940"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Background" Value="#171A1E"/>
+      <Setter Property="BorderBrush" Value="#2E333A"/>
+      <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="Padding" Value="12,8"/>
     </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="#171A1E"/>
+      <Setter Property="BorderBrush" Value="#3C434D"/>
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="#171A1E"/>
+      <Setter Property="BorderBrush" Value="#4D96F0"/>
+    </Style>
+
+    <Style Selector="CheckBox"><Setter Property="Foreground" Value="#DADEE3"/></Style>
+
+    <!-- ============ DATA ============ -->
+    <Style Selector="ProgressBar">
+      <Setter Property="Height" Value="4"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Foreground" Value="#4D96F0"/>
+      <Setter Property="Background" Value="#2C323A"/>
+      <Setter Property="CornerRadius" Value="2"/>
+    </Style>
+    <Style Selector="ProgressBar /template/ Border#PART_Indicator"><Setter Property="CornerRadius" Value="2"/></Style>
+
+    <Style Selector="ListBoxItem">
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#22262C"/></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#1F2B3A"/></Style>
+    <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#24344A"/></Style>
+
+    <Style Selector="TreeViewItem:pointerover /template/ ContentPresenter#PART_HeaderPresenter"><Setter Property="Background" Value="#22262C"/></Style>
+    <Style Selector="TreeViewItem:selected /template/ ContentPresenter#PART_HeaderPresenter"><Setter Property="Background" Value="#1F2B3A"/></Style>
+
+    <Style Selector="ScrollViewer"><Setter Property="AllowAutoHide" Value="True"/></Style>
   </Window.Styles>
 
-  <!-- Full-width analysis workspace: navigation and chat are no longer permanent side rails. -->
-  <Grid ColumnDefinitions="0,*,0" RowDefinitions="*,220">
-    <!-- LEFT NAVIGATION SIDEBAR -->
-    <Border Background="#171A1D" BorderBrush="#2A2E33" BorderThickness="0,0,1,0" Padding="16">
+  <!-- ROOT: sidebar | workspace (content + assistant dock) -->
+  <Grid ColumnDefinitions="188,*">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <Border Background="#1A1D22" BorderBrush="#262A30" BorderThickness="0,0,1,0" Padding="10,14,10,12">
       <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Logo -->
-        <StackPanel Spacing="6" Margin="4,4,0,24">
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <Border Background="#4D9DE0" CornerRadius="6" Width="32" Height="32">
-              <TextBlock Text="SM" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="SystemMind" FontSize="16" FontWeight="SemiBold"/>
-              <TextBlock Text="System monitor" FontSize="11" Classes="muted"/>
-            </StackPanel>
-          </StackPanel>
+
+        <!-- Brand -->
+        <StackPanel Orientation="Horizontal" Spacing="9" Margin="8,2,0,20">
+          <Border Width="22" Height="22" CornerRadius="6" Background="#1F2B3A" BorderBrush="#3A6BA8" BorderThickness="1">
+            <Ellipse Width="7" Height="7" Fill="#4D96F0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <TextBlock Text="SystemMind" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Navigation items -->
-        <StackPanel Grid.Row="1" Spacing="4">
-          <TextBlock Text="STORAGE" Classes="muted" FontSize="10" FontWeight="Bold" Margin="10,0,0,6"/>
-          
-          <Button Content="Storage explorer"
-                  Classes.nav-active="{Binding IsStorageExplorerActive}"
-                  Classes.nav="{Binding !IsStorageExplorerActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="StorageExplorer"/>
+        <!-- Navigation -->
+        <StackPanel Grid.Row="1" Spacing="2">
+          <TextBlock Text="Monitoring" Classes="eyebrow" Margin="10,0,0,6"/>
 
-          <Button Content="Cleanup"
-                  Classes.nav-active="{Binding IsCleanupActive}"
-                  Classes.nav="{Binding !IsCleanupActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="Cleanup"/>
+          <Button Classes.nav-active="{Binding IsOverviewActive}" Classes.nav="{Binding !IsOverviewActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Overview">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="#4D96F0" Data="M2,2 H6.5 V6.5 H2 Z M8.5,2 H13 V6.5 H8.5 Z M2,8.5 H6.5 V13 H2 Z M8.5,8.5 H13 V13 H8.5 Z"/>
+              <TextBlock Text="Dashboard" Foreground="{Binding $parent[Button].Foreground}"/>
+            </StackPanel>
+          </Button>
 
-          <TextBlock Text="SYSTEM" Classes="muted" FontSize="10" FontWeight="Bold" Margin="10,18,0,6"/>
+          <Button Classes.nav-active="{Binding IsStorageExplorerActive}" Classes.nav="{Binding !IsStorageExplorerActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="StorageExplorer">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="#3FCF6B" Data="M1.5,4 H5.5 L7,5.5 H13 V12 H1.5 Z"/>
+              <TextBlock Text="Storage" Foreground="{Binding $parent[Button].Foreground}"/>
+            </StackPanel>
+          </Button>
 
-          <Button Content="Overview"
-                  Classes.nav-active="{Binding IsOverviewActive}"
-                  Classes.nav="{Binding !IsOverviewActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="Overview"/>
+          <Button Classes.nav-active="{Binding IsPerformanceActive}" Classes.nav="{Binding !IsPerformanceActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Performance">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="#F2994A" Data="M2,3.5 H13 M2,7.5 H13 M2,11.5 H8.5"/>
+              <TextBlock Text="Processes" Foreground="{Binding $parent[Button].Foreground}"/>
+            </StackPanel>
+          </Button>
 
-          <Button Content="Performance"
-                  Classes.nav-active="{Binding IsPerformanceActive}"
-                  Classes.nav="{Binding !IsPerformanceActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="Performance"/>
+          <TextBlock Text="Tools" Classes="eyebrow" Margin="10,18,0,6"/>
 
-          <Button Content="📈 Live Resources"
-                  Classes.nav-active="{Binding IsLiveResourcesActive}"
-                  Classes.nav="{Binding !IsLiveResourcesActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="LiveResources"/>
+          <Button Classes.nav-active="{Binding IsCleanupActive}" Classes.nav="{Binding !IsCleanupActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Cleanup">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="#F5C84C" Data="M2.5,4 H12.5 M5.5,4 V2.2 H9.5 V4 M3.7,4 L4.3,12.5 H10.7 L11.3,4"/>
+              <TextBlock Text="Cleanup" Foreground="{Binding $parent[Button].Foreground}"/>
+            </StackPanel>
+          </Button>
 
-          <Button Content="Settings"
-                  Classes.nav-active="{Binding IsSettingsActive}"
-                  Classes.nav="{Binding !IsSettingsActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="Settings"/>
+          <Button Classes.nav-active="{Binding IsSettingsActive}" Classes.nav="{Binding !IsSettingsActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Settings">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="#8A929C" Data="M2,4.5 H13 M2,10.5 H13 M9.5,2.8 V6.2 M5.5,8.8 V12.2"/>
+              <TextBlock Text="Settings" Foreground="{Binding $parent[Button].Foreground}"/>
+            </StackPanel>
+          </Button>
         </StackPanel>
 
-        <!-- Bottom status badge -->
-        <Border Grid.Row="2" Background="#1A1D20" BorderBrush="#2A2E33" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,16,0,0">
-          <StackPanel Spacing="4">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <Ellipse Width="7" Height="7" Fill="#65B878" VerticalAlignment="Center"/>
-              <TextBlock Text="MONITORING" FontWeight="SemiBold" FontSize="10" Foreground="#D9DEE3"/>
+        <!-- Live readout -->
+        <Border Grid.Row="2" Classes="inset" Padding="11,10" Margin="0,14,0,0">
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="7">
+              <Ellipse Width="6" Height="6" Fill="#3FCF6B" VerticalAlignment="Center"/>
+              <TextBlock Text="Live" Classes="eyebrow" Foreground="#3FCF6B"/>
             </StackPanel>
-            <TextBlock Text="System services available" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="CPU" Classes="eyebrow" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding CpuHeadline}" Classes="num" FontSize="11"/>
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Memory" Classes="eyebrow" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding MemoryHeadline}" Classes="num" FontSize="11"/>
+            </Grid>
+            <ProgressBar Value="{Binding MemoryPercent}" Maximum="100" Foreground="#F2994A"/>
           </StackPanel>
         </Border>
       </Grid>
     </Border>
 
-    <!-- CENTER MAIN VIEW -->
-    <Grid Grid.Column="1" Grid.Row="0" RowDefinitions="Auto,Auto,*">
-      <!-- Compact mode bar replaces the permanent navigation rail. -->
-      <Border Background="#171A1D" BorderBrush="#2A2E33" BorderThickness="0,0,0,1" Padding="20,10">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-            <Border Background="#4D9DE0" CornerRadius="4" Width="24" Height="24">
-              <TextBlock Text="SM" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
-            <TextBlock Text="SystemMind" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-            <Button Content="Storage" Classes.nav-active="{Binding IsStorageExplorerActive}" Classes.nav="{Binding !IsStorageExplorerActive}" Command="{Binding SetViewCommand}" CommandParameter="StorageExplorer" Padding="12,5" FontSize="12"/>
-            <Button Content="Cleanup" Classes.nav-active="{Binding IsCleanupActive}" Classes.nav="{Binding !IsCleanupActive}" Command="{Binding SetViewCommand}" CommandParameter="Cleanup" Padding="12,5" FontSize="12"/>
-            <Button Content="Overview" Classes.nav-active="{Binding IsOverviewActive}" Classes.nav="{Binding !IsOverviewActive}" Command="{Binding SetViewCommand}" CommandParameter="Overview" Padding="12,5" FontSize="12"/>
-            <Button Content="Processes" Classes.nav-active="{Binding IsPerformanceActive}" Classes.nav="{Binding !IsPerformanceActive}" Command="{Binding SetViewCommand}" CommandParameter="Performance" Padding="12,5" FontSize="12"/>
-            <Button Content="Live Resources" Classes.nav-active="{Binding IsLiveResourcesActive}" Classes.nav="{Binding !IsLiveResourcesActive}" Command="{Binding SetViewCommand}" CommandParameter="LiveResources" Padding="12,5" FontSize="12"/>
-            <Button Content="Settings" Classes.nav-active="{Binding IsSettingsActive}" Classes.nav="{Binding !IsSettingsActive}" Command="{Binding SetViewCommand}" CommandParameter="Settings" Padding="12,5" FontSize="12"/>
-          </StackPanel>
-          <TextBlock Grid.Column="2" Text="SYSTEM MONITOR" Classes="muted" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-        </Grid>
+    <!-- ===================== WORKSPACE ===================== -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+
+      <!-- Status banner -->
+      <Border IsVisible="{Binding HasStatusBanner}" Background="#1A2634" BorderBrush="#3A6BA8" BorderThickness="1"
+              CornerRadius="10" Margin="20,14,20,0" Padding="14,9">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Ellipse Width="6" Height="6" Fill="#4D96F0" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding StatusBanner}" Foreground="#D4E5F8" FontWeight="Medium" VerticalAlignment="Center"/>
+        </StackPanel>
       </Border>
 
-      <!-- Notification Banner -->
-      <Border Grid.Row="1" IsVisible="{Binding HasStatusBanner}" Background="#25384A" BorderBrush="#4D9DE0" BorderThickness="1" CornerRadius="6" Margin="20,16,20,0" Padding="12,8">
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Text="{Binding StatusBanner}" Foreground="#FFFFFF" FontWeight="Medium" VerticalAlignment="Center"/>
-        </Grid>
-      </Border>
+      <!-- Views share row 1 -->
+      <Grid Grid.Row="1">
 
-      <!-- VIEW 1: WINDIRSTAT STORAGE EXPLORER -->
-      <Grid Grid.Row="2" IsVisible="{Binding IsStorageExplorerActive}" Margin="20,16" RowDefinitions="Auto,Auto,*,Auto,1.3*,Auto">
-        <!-- Toolbar: Path + Quick Buttons + Scan / Cancel -->
-        <Border Classes="card" Margin="0,0,0,10" Padding="12">
-          <StackPanel Spacing="10">
-            <!-- First line: Path input, browse, scan, cancel -->
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-              <TextBox Text="{Binding StorageExplorer.ScanPath}" Watermark="Enter folder path to scan (e.g. /home/user or /)..." VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-              <Button Grid.Column="1" Content="Browse…" Command="{Binding StorageExplorer.BrowseFolderCommand}" Margin="0,0,8,0"/>
-              <Button Grid.Column="2" Content="Scan" Classes="action-primary"
-                      Command="{Binding StorageExplorer.ScanCommand}"
-                      IsEnabled="{Binding StorageExplorer.CanScan}" Margin="0,0,8,0"/>
-              <Button Grid.Column="3" Content="Cancel" Classes="action-danger"
-                      Command="{Binding StorageExplorer.CancelCommand}"
-                      IsEnabled="{Binding StorageExplorer.IsScanning}"/>
-            </Grid>
+        <!-- ============ VIEW: DASHBOARD ============ -->
+        <ScrollViewer IsVisible="{Binding IsOverviewActive}" Padding="20,14,20,16"
+                      HorizontalScrollBarVisibility="Auto">
+          <StackPanel Spacing="12">
 
-            <!-- Second line: Quick paths + Status -->
-            <Grid ColumnDefinitions="Auto,*">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="Quick:" Classes="muted" VerticalAlignment="Center" FontSize="12"/>
-                <Button Content="Root (/)" Padding="8,4" FontSize="11" FontWeight="Bold" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/"/>
-                <Button Content="Home (~)" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~"/>
-                <Button Content="Downloads" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Downloads"/>
-                <Button Content="Var (/var)" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/var"/>
-                <Button Content="Usr (/usr)" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/usr"/>
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+              <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <TextBlock Text="Dashboard" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding CpuDetail}" Classes="dim num" FontSize="10.5" VerticalAlignment="Center"/>
               </StackPanel>
-              <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.StatusMessage}"
-                         Classes="muted" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Button Grid.Column="1" Classes="iconbtn" Content="Refresh" Command="{Binding RefreshCommand}"/>
             </Grid>
-          </StackPanel>
-        </Border>
 
-        <!-- Drive Picker Panel -->
-        <Border Grid.Row="1" Classes="card" Margin="0,0,0,10" Padding="12">
-          <StackPanel Spacing="8">
-            <Grid ColumnDefinitions="*,Auto">
-              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="DRIVES" Classes="muted" FontWeight="SemiBold" FontSize="10" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="Physical drives" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
-              </StackPanel>
-              <Button Grid.Column="1" Content="Refresh" Command="{Binding StorageExplorer.RefreshDrivesCommand}" Padding="8,4" FontSize="11"/>
-            </Grid>
-            <ItemsControl ItemsSource="{Binding StorageExplorer.AvailableDrives}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button Command="{Binding $parent[Window].DataContext.StorageExplorer.SelectDriveCommand}"
-                          CommandParameter="{Binding}"
-                          Background="#171A1D" BorderBrush="#343940" BorderThickness="1" CornerRadius="5" Padding="12,8" Margin="0,0,8,4">
-                    <StackPanel Width="195" Spacing="5">
-                      <StackPanel Orientation="Horizontal" Spacing="7">
-                        <TextBlock Text="{Binding Icon}" FontSize="18" VerticalAlignment="Center"/>
-                        <StackPanel VerticalAlignment="Center">
-                          <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                          <TextBlock Text="{Binding MountPoint}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis"/>
+            <!-- Equal-size cards wrap from four columns down to one as space narrows. -->
+            <WrapPanel>
+
+              <!-- INSIGHTS -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+                <StackPanel Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#F5C84C" VerticalAlignment="Center"
+                          Data="M7,1 C4.2,1 2.2,3 2.2,5.6 C2.2,7.3 3,8.4 3.9,9.3 C4.4,9.8 4.6,10.3 4.6,11 H9.4 C9.4,10.3 9.6,9.8 10.1,9.3 C11,8.4 11.8,7.3 11.8,5.6 C11.8,3 9.8,1 7,1 Z M5,12.2 H9 V13.2 H5 Z"/>
+                    <TextBlock Text="Insights" Classes="cardtitle"/>
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Recommendations}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border BorderBrush="#2A2F36" BorderThickness="0,0,0,1" Padding="0,8">
+                          <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Path Width="13" Height="12" Stretch="Uniform" Fill="{Binding Accent}" Margin="0,2,9,0" VerticalAlignment="Top"
+                                  Data="M7,1 L13,12.5 H1 Z"/>
+                            <StackPanel Grid.Column="1" Spacing="3">
+                              <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="SemiBold" TextWrapping="Wrap" LineHeight="15"/>
+                              <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="10.5" FontStyle="Italic" TextWrapping="Wrap" LineHeight="14"/>
+                            </StackPanel>
+                            <Path Grid.Column="2" Width="6" Height="10" Stretch="Uniform" StrokeThickness="1.3" Stroke="#5E6670"
+                                  StrokeLineCap="Round" StrokeJoin="Round" Data="M1,1 L5,5 L1,9" Margin="8,4,0,0" VerticalAlignment="Top"/>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <!-- CPU -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#4D96F0" VerticalAlignment="Center"/>
+                    <TextBlock Text="CPU" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="104" Height="104" Stroke="#4D96F0" ValueText="{Binding CpuHeadline}" Caption="CPU"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
+                      <TextBlock Text="UTILISATION" Classes="eyebrow"/>
+                      <TextBlock Text="{Binding CpuHeadline}" Classes="big" Foreground="#4D96F0"/>
+                      <TextBlock Text="{Binding CpuDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+                  <controls:TelemetryChartControl Values="{Binding CpuHistory}" Stroke="#4D96F0" Height="74"/>
+                  <TextBlock Text="Sampled every 2 seconds" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+
+              <!-- MEMORY -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#F2994A" VerticalAlignment="Center"/>
+                    <TextBlock Text="Memory" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="104" Height="104" Stroke="#F2994A" Value="{Binding MemoryPercent}"
+                                        ValueText="{Binding MemoryPercent, StringFormat='{}{0:F1}%'}" Caption="RAM"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
+                      <TextBlock Text="IN USE" Classes="eyebrow"/>
+                      <TextBlock Text="{Binding MemoryHeadline}" FontSize="15" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding MemoryDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+                  <controls:TelemetryChartControl Values="{Binding MemoryHistory}" Stroke="#F2994A" Height="74"/>
+                </StackPanel>
+              </Border>
+
+              <!-- NETWORK (optional data: needs the view-model properties listed in the notes) -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="14" Height="14" Fill="#B65CF0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Network" Classes="cardtitle"/>
+                  </StackPanel>
+                  <StackPanel Spacing="9">
+                    <StackPanel Orientation="Horizontal" Spacing="9">
+                      <Ellipse Width="8" Height="8" Fill="#3FCF6B" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding NetworkDownText, FallbackValue='—'}" Classes="num" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="9">
+                      <Ellipse Width="8" Height="8" Fill="#4D96F0" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding NetworkUpText, FallbackValue='—'}" Classes="num" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </StackPanel>
+                  <Border Height="1" Background="#2A2F36"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Total In" Classes="muted" FontSize="11"/>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalInText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Total Out" Classes="muted" FontSize="11"/>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalOutText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
+            </WrapPanel>
+
+            <WrapPanel>
+
+              <!-- DISK -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#3FCF6B" VerticalAlignment="Center"/>
+                    <TextBlock Text="Disk" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#3FCF6B" Value="{Binding StoragePercent}"
+                                        ValueText="{Binding StoragePercent, StringFormat='{}{0:F1}%'}" Caption="Disk"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
+                      <TextBlock Text="{Binding StorageHeadline}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                      <TextBlock Text="{Binding StorageDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding DiskItems}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <StackPanel Margin="0,4,0,0" Spacing="4">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding Name}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="#3FCF6B" Classes="num" FontSize="10.5"/>
+                          </Grid>
+                          <ProgressBar Value="{Binding Percent}" Maximum="100" Height="3" Foreground="#3FCF6B"/>
                         </StackPanel>
-                      </StackPanel>
-                      <ProgressBar Value="{Binding UsagePercent}" Maximum="100" Height="5" Foreground="#65B878" Background="#30353B" CornerRadius="2"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <!-- THERMAL (optional data) -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#F2994A" VerticalAlignment="Center"/>
+                    <TextBlock Text="Thermal" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#F2994A"
+                                        ValueText="{Binding ThermalText, FallbackValue='—'}" Caption="Temp"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="8">
                       <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{Binding FormattedCapacity}" Classes="muted" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding FormattedFree}" Foreground="#86C993" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="CPU" Classes="muted" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ThermalCpuText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                      </Grid>
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Max" Classes="muted" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ThermalMaxText, FallbackValue='—'}" Classes="num" FontSize="11"/>
                       </Grid>
                     </StackPanel>
-                  </Button>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- BATTERY (optional data) -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#3FCF6B" VerticalAlignment="Center"/>
+                    <TextBlock Text="Battery" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#3FCF6B"
+                                        ValueText="{Binding BatteryText, FallbackValue='—'}" Caption="Battery"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="8">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Status" Classes="muted" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding BatteryStatusText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                      </Grid>
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Health" Classes="muted" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding BatteryHealthText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                      </Grid>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- GPU (optional data) -->
+              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="14" Height="14" CornerRadius="3" Background="#4D96F0" VerticalAlignment="Center"/>
+                    <TextBlock Text="GPU" Classes="cardtitle"/>
+                  </StackPanel>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <controls:RingGauge Width="80" Height="80" Thickness="7" Stroke="#F2994A"
+                                        ValueText="{Binding GpuText, FallbackValue='—'}" Caption="GPU"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="6">
+                      <TextBlock Text="{Binding GpuNameText, FallbackValue='—'}" Classes="num" FontSize="10.5" TextWrapping="Wrap"/>
+                      <TextBlock Text="{Binding GpuMemoryText, FallbackValue='—'}" Classes="muted num" FontSize="10.5"/>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+            </WrapPanel>
+
+            <!-- Row 3 : Top processes -->
+            <Border Classes="panel">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" Stroke="#8A929C"
+                          Data="M2,3.5 H13 M2,7.5 H13 M2,11.5 H8.5" VerticalAlignment="Center"/>
+                    <TextBlock Text="Top Processes" Classes="cardtitle"/>
+                    <TextBlock Text="by memory" Classes="dim" FontSize="10.5" VerticalAlignment="Center"/>
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding Performance.StatusMessage}" Classes="dim" FontSize="10.5"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding TopProcesses}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border BorderBrush="#262B32" BorderThickness="0,0,0,1" Padding="2,7">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding Name}" FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Memory}" Classes="num" Foreground="#3FCF6B" FontSize="11"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
           </StackPanel>
-        </Border>
+        </ScrollViewer>
 
-        <!-- Top Split: Directory Hierarchy Tree (Left) & Extension List (Right) -->
-        <Grid Grid.Row="2" ColumnDefinitions="1.3*,12,*">
-          <!-- Tree: Folders & Files sorted by size -->
-          <Border Classes="card">
-            <Grid RowDefinitions="Auto,*">
-              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,8,8">
-                <TextBlock Text="FOLDERS / FILES" FontWeight="SemiBold" FontSize="10" Classes="muted"/>
-                <TextBlock Grid.Column="1" Text="SIZE" Classes="muted" FontSize="10" FontWeight="SemiBold" Margin="0,0,16,0"/>
-                <TextBlock Grid.Column="2" Text="SHARE" Classes="muted" FontSize="10" FontWeight="SemiBold"/>
+        <!-- ============ VIEW: STORAGE EXPLORER ============ -->
+        <Grid IsVisible="{Binding IsStorageExplorerActive}" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*,Auto,1.3*,Auto">
+
+          <!-- Scan bar -->
+          <Border Classes="panel" Padding="12" Margin="0,0,0,10">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <TextBox Text="{Binding StorageExplorer.ScanPath}" Watermark="Folder to scan, e.g. /home/user or /" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Command="{Binding StorageExplorer.BrowseFolderCommand}" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="Scan" Classes="primary" Padding="20,7"
+                        Command="{Binding StorageExplorer.ScanCommand}" IsEnabled="{Binding StorageExplorer.CanScan}" Margin="0,0,8,0"/>
+                <Button Grid.Column="3" Content="Cancel" Classes="danger"
+                        Command="{Binding StorageExplorer.CancelCommand}" IsEnabled="{Binding StorageExplorer.IsScanning}"/>
               </Grid>
+              <Grid ColumnDefinitions="Auto,*">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="Quick" Classes="eyebrow" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                  <Button Content="/" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/"/>
+                  <Button Content="~" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~"/>
+                  <Button Content="Downloads" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Downloads"/>
+                  <Button Content="/var" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/var"/>
+                  <Button Content="/usr" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/usr"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.StatusMessage}" Classes="muted" FontSize="12"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              </Grid>
+            </StackPanel>
+          </Border>
 
-              <TreeView Grid.Row="1" ItemsSource="{Binding StorageExplorer.RootNodes}"
-                        SelectedItem="{Binding StorageExplorer.SelectedNode, Mode=TwoWay}">
-                <TreeView.ItemTemplate>
-                  <TreeDataTemplate ItemsSource="{Binding Children}">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,2">
-                      <TextBlock Text="{Binding IconText}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"
-                                 TextTrimming="CharacterEllipsis" MaxWidth="300" FontWeight="Medium"/>
-                      <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Foreground="#86C993"
-                                 FontWeight="SemiBold" FontSize="12" Margin="8,0,12,0" VerticalAlignment="Center"/>
-                      <TextBlock Grid.Column="3" Text="{Binding FormattedPercent}" Classes="muted"
-                                 FontSize="11" VerticalAlignment="Center"/>
-                    </Grid>
-                  </TreeDataTemplate>
-                </TreeView.ItemTemplate>
-              </TreeView>
+          <!-- Drives -->
+          <Border Grid.Row="1" Classes="panel" Padding="12" Margin="0,0,0,10">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Drives" Classes="cardtitle" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Refresh" Classes="sm" Command="{Binding StorageExplorer.RefreshDrivesCommand}"/>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding StorageExplorer.AvailableDrives}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Classes="tile" Margin="0,0,8,6"
+                            Command="{Binding $parent[Window].DataContext.StorageExplorer.SelectDriveCommand}"
+                            CommandParameter="{Binding}">
+                      <StackPanel Width="210" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                          <TextBlock Text="{Binding Icon}" FontSize="17" VerticalAlignment="Center"/>
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding MountPoint}" Classes="muted num" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                          </StackPanel>
+                        </StackPanel>
+                        <ProgressBar Value="{Binding UsagePercent}" Maximum="100" Foreground="#3FCF6B"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding FormattedCapacity}" Classes="muted num" FontSize="10.5"/>
+                          <TextBlock Grid.Column="1" Text="{Binding FormattedFree}" Foreground="#3FCF6B" Classes="num" FontSize="10.5"/>
+                        </Grid>
+                      </StackPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Tree + extensions -->
+          <Grid Grid.Row="2" ColumnDefinitions="1.3*,12,*">
+            <Border Classes="panel" Padding="14,12">
+              <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,10,8">
+                  <TextBlock Text="Folders / Files" Classes="eyebrow"/>
+                  <TextBlock Grid.Column="1" Text="Size" Classes="eyebrow" Margin="0,0,22,0"/>
+                  <TextBlock Grid.Column="2" Text="Share" Classes="eyebrow"/>
+                </Grid>
+                <TreeView Grid.Row="1" Background="Transparent" ItemsSource="{Binding StorageExplorer.RootNodes}"
+                          SelectedItem="{Binding StorageExplorer.SelectedNode, Mode=TwoWay}">
+                  <TreeView.ItemTemplate>
+                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                      <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,2">
+                        <TextBlock Text="{Binding IconText}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320"/>
+                        <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Classes="num" Foreground="#7FDB9E" FontSize="11.5"
+                                   Margin="10,0,14,0" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="{Binding FormattedPercent}" Classes="muted num" FontSize="11" VerticalAlignment="Center" MinWidth="40" TextAlignment="Right"/>
+                      </Grid>
+                    </TreeDataTemplate>
+                  </TreeView.ItemTemplate>
+                </TreeView>
+              </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+
+            <Border Grid.Column="2" Classes="panel" Padding="14,12">
+              <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,6,8">
+                  <TextBlock Text="Type" Classes="eyebrow"/>
+                  <TextBlock Grid.Column="1" Text="Category" Classes="eyebrow" Margin="42,0,0,0"/>
+                  <TextBlock Grid.Column="2" Text="Size" Classes="eyebrow" Margin="0,0,16,0"/>
+                  <TextBlock Grid.Column="3" Text="Share" Classes="eyebrow"/>
+                </Grid>
+                <ScrollViewer Grid.Row="1">
+                  <ItemsControl ItemsSource="{Binding StorageExplorer.Extensions}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border BorderBrush="#262B32" BorderThickness="0,0,0,1" Padding="2,7">
+                          <Grid ColumnDefinitions="Auto,64,*,Auto,Auto">
+                            <Border Background="{Binding ColorHex}" CornerRadius="3" Width="10" Height="10" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Extension}" Classes="num" FontWeight="SemiBold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="{Binding FormattedSize}" Classes="num" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                            <TextBlock Grid.Column="4" Text="{Binding FormattedPercent}" Classes="muted num" FontSize="11" VerticalAlignment="Center" MinWidth="40" TextAlignment="Right"/>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Grid>
+            </Border>
+          </Grid>
+
+          <GridSplitter Grid.Row="3" Height="10" Background="Transparent" ResizeDirection="Rows"/>
+
+          <!-- Disk map -->
+          <Border Grid.Row="4" Classes="panel" Padding="0" ClipToBounds="True">
+            <Grid RowDefinitions="Auto,*">
+              <Grid Margin="16,12,16,10" ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <TextBlock Text="Disk Map" Classes="cardtitle" VerticalAlignment="Center"/>
+                  <TextBlock Text="Block area = disk usage" Classes="dim" FontSize="11" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.ScannedFilesText}" Classes="muted num" FontSize="11"/>
+              </Grid>
+              <controls:TreemapControl Grid.Row="1" x:Name="TreemapDisplay"
+                                       Items="{Binding StorageExplorer.TreemapItems}"
+                                       SelectedItem="{Binding StorageExplorer.SelectedTreemapItem, Mode=TwoWay}"
+                                       HoveredItem="{Binding StorageExplorer.HoveredTreemapItem, Mode=TwoWay}"/>
             </Grid>
           </Border>
 
-          <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+          <!-- Inspector -->
+          <Border Grid.Row="5" Classes="panel" Padding="14,9" Margin="0,10,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{Binding StorageExplorer.HoveredInfoText}" VerticalAlignment="Center" FontSize="12"
+                         Foreground="#C4CAD1" TextTrimming="CharacterEllipsis"/>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsEnabled="{Binding StorageExplorer.HasSelection}">
+                <Button Content="Reveal" Classes="sm" ToolTip.Tip="Open in file manager" Command="{Binding StorageExplorer.OpenFolderCommand}"/>
+                <Button Content="Terminal" Classes="sm" ToolTip.Tip="Open terminal here" Command="{Binding StorageExplorer.OpenTerminalCommand}"/>
+                <Button Content="Copy path" Classes="sm" ToolTip.Tip="Copy path to clipboard" Command="{Binding StorageExplorer.CopyPathCommand}"/>
+                <Button Content="Ask assistant" Classes="sm primary" ToolTip.Tip="Ask the assistant about this item" Command="{Binding StorageExplorer.AskAiAboutSelectedCommand}"/>
+                <Button Content="Move to trash" Classes="sm danger" ToolTip.Tip="Move to trash" Command="{Binding StorageExplorer.MoveToTrashCommand}"/>
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
 
-          <!-- WinDirStat Extension List (Right) -->
-          <Border Grid.Column="2" Classes="card">
+        <!-- ============ VIEW: CLEANUP ============ -->
+        <ScrollViewer IsVisible="{Binding IsCleanupActive}" Padding="24,18">
+          <StackPanel Spacing="16">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Cleanup" Classes="h1"/>
+                <TextBlock Text="Find caches, orphaned packages and build artifacts you can safely reclaim." Classes="muted" FontSize="12"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Content="Scan" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}" Padding="18,7"/>
+                <Button Content="Clean selected" Classes="primary" Command="{Binding Cleanup.CleanSelectedCommand}" IsEnabled="{Binding Cleanup.CanOperate}" Padding="16,7"/>
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,12,*,12,*">
+              <Border Classes="panel">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="Detected" Classes="eyebrow"/>
+                  <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" Classes="big" Foreground="#4D96F0"/>
+                  <TextBlock Text="Across cache and temp targets" Classes="muted" FontSize="11"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Classes="panel">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="Selected" Classes="eyebrow"/>
+                  <TextBlock Text="{Binding Cleanup.SelectedReclaimableText}" Classes="big" Foreground="#3FCF6B"/>
+                  <TextBlock Text="Will be reclaimed" Classes="muted" FontSize="11"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="4" Classes="panel">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="Status" Classes="eyebrow"/>
+                  <TextBlock Text="{Binding Cleanup.StatusMessage}" FontSize="12.5" TextWrapping="Wrap" LineHeight="18"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Select all" Classes="sm" Command="{Binding Cleanup.SelectAllCommand}"/>
+              <Button Content="Deselect all" Classes="sm" Command="{Binding Cleanup.DeselectAllCommand}"/>
+            </StackPanel>
+
+            <Border Classes="panel" Padding="10">
+              <ItemsControl ItemsSource="{Binding Cleanup.FilteredItems}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Classes="inset" Padding="14,12" Margin="0,0,0,8">
+                      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                          <StackPanel Orientation="Horizontal" Spacing="9">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
+                            <Border Background="{Binding BadgeColor}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding RiskLevel}" FontSize="9.5" FontWeight="Bold" Foreground="#14171B"/>
+                            </Border>
+                            <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
+                          </StackPanel>
+                          <TextBlock Text="{Binding Description}" Classes="muted" FontSize="11.5" TextWrapping="Wrap"/>
+                          <TextBlock Text="{Binding Path}" Classes="dim num" FontSize="10.5" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Classes="num" Foreground="#3FCF6B" FontSize="15" FontWeight="Medium"
+                                   VerticalAlignment="Center" Margin="18,0"/>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                          <Button Content="Reveal" Classes="sm"
+                                  Command="{Binding $parent[Window].DataContext.Cleanup.OpenItemLocationCommand}" CommandParameter="{Binding}"/>
+                          <Button Content="Ask assistant" Classes="sm"
+                                  Command="{Binding $parent[Window].DataContext.Cleanup.AskAiAboutItemCommand}" CommandParameter="{Binding}"/>
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============ VIEW: PROCESSES ============ -->
+        <Grid IsVisible="{Binding IsPerformanceActive}" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+            <StackPanel Spacing="3">
+              <TextBlock Text="Processes" Classes="h1"/>
+              <TextBlock Text="{Binding Performance.StatusMessage}" Classes="muted" FontSize="12"/>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="iconbtn" Content="Refresh" Command="{Binding Performance.RefreshCommand}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <Border Grid.Row="1" Classes="panel" Padding="12" Margin="0,0,0,12">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="4,0,22,0">
+                <TextBlock Text="CPU" Classes="eyebrow" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Performance.CpuText}" Classes="num" FontWeight="SemiBold" Foreground="#4D96F0"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,22,0">
+                <TextBlock Text="RAM" Classes="eyebrow" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Performance.MemoryHeadline}" Classes="num" FontWeight="SemiBold" Foreground="#F2994A"/>
+              </StackPanel>
+              <TextBox Grid.Column="2" Text="{Binding Performance.SearchFilter}" Watermark="Filter by name or PID…" VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+              <Button Grid.Column="3" Content="End task" Classes="danger"
+                      Command="{Binding Performance.TerminateProcessCommand}" IsEnabled="{Binding Performance.HasSelectedProcess}"/>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Classes="panel" Padding="12,12,12,8">
             <Grid RowDefinitions="Auto,*">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,4,8">
-                <TextBlock Text="TYPE" FontWeight="SemiBold" FontSize="10" Classes="muted"/>
-                <TextBlock Grid.Column="1" Text="CATEGORY" Classes="muted" FontSize="10" FontWeight="SemiBold" Margin="12,0,0,0"/>
-                <TextBlock Grid.Column="2" Text="SIZE" Classes="muted" FontSize="10" FontWeight="SemiBold" Margin="0,0,12,0"/>
-                <TextBlock Grid.Column="3" Text="SHARE" Classes="muted" FontSize="10" FontWeight="SemiBold"/>
+              <Grid ColumnDefinitions="80,*,120" Margin="10,0,16,8">
+                <TextBlock Text="PID" Classes="eyebrow"/>
+                <TextBlock Grid.Column="1" Text="Process" Classes="eyebrow"/>
+                <TextBlock Grid.Column="2" Text="Memory" Classes="eyebrow" HorizontalAlignment="Right"/>
               </Grid>
+              <ListBox Grid.Row="1" Background="Transparent" ItemsSource="{Binding Performance.FilteredProcesses}"
+                       SelectedItem="{Binding Performance.SelectedProcess, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="80,*,120">
+                      <TextBlock Text="{Binding Id}" Classes="muted num" FontSize="12" VerticalAlignment="Center"/>
+                      <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Grid.Column="2" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}" Classes="num"
+                                 Foreground="#3FCF6B" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+        </Grid>
 
+        <!-- ============ VIEW: SETTINGS ============ -->
+        <ScrollViewer IsVisible="{Binding IsSettingsActive}" Padding="28,22">
+          <StackPanel Spacing="16" MaxWidth="720" HorizontalAlignment="Left">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Settings" Classes="h1"/>
+              <TextBlock Text="Providers, model selection and deletion protections." Classes="muted" FontSize="12"/>
+            </StackPanel>
+
+            <Border Classes="panel" Padding="20">
+              <StackPanel Spacing="18">
+                <TextBlock Text="AI provider" Classes="cardtitle"/>
+
+                <StackPanel Spacing="6">
+                  <TextBlock Text="OpenRouter API key" FontSize="12" FontWeight="Medium"/>
+                  <TextBox Text="{Binding Settings.OpenRouterKey}" PasswordChar="•" Watermark="sk-or-v1-…"/>
+                  <TextBlock Text="Use google/gemma-4-31b-it:free or any open-weights model via OpenRouter." Classes="muted" FontSize="11"/>
+                </StackPanel>
+
+                <StackPanel Spacing="6">
+                  <TextBlock Text="OpenAI API key (optional)" FontSize="12" FontWeight="Medium"/>
+                  <TextBox Text="{Binding Settings.OpenAiKey}" PasswordChar="•" Watermark="sk-…"/>
+                </StackPanel>
+
+                <StackPanel Spacing="6">
+                  <TextBlock Text="Model" FontSize="12" FontWeight="Medium"/>
+                  <TextBox Text="{Binding Settings.SelectedModel}" Watermark="google/gemma-4-31b-it:free" FontFamily="Cascadia Mono, JetBrains Mono, Menlo, Consolas, monospace"/>
+                </StackPanel>
+
+                <StackPanel Spacing="6">
+                  <TextBlock Text="Custom endpoint (optional)" FontSize="12" FontWeight="Medium"/>
+                  <TextBox Text="{Binding Settings.CustomEndpoint}" Watermark="https://openrouter.ai/api/v1/chat/completions" FontFamily="Cascadia Mono, JetBrains Mono, Menlo, Consolas, monospace"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="panel" Padding="20">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Safety" Classes="cardtitle"/>
+                <CheckBox IsChecked="{Binding Settings.SafeMode}" Content="Protect critical system directories (/, /usr, /bin, /etc, /boot)" IsEnabled="False"/>
+                <TextBlock Text="Safe mode blocks deletion of essential operating-system and root directories." Classes="muted" FontSize="11"/>
+              </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Button Content="Save settings" Classes="primary" Padding="18,8" Command="{Binding Settings.SaveCommand}"/>
+              <Button Content="Reload from .env" Padding="14,8" Command="{Binding Settings.ReloadCommand}"/>
+              <TextBlock Text="{Binding Settings.StatusMessage}" Classes="muted" VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+
+      <!-- ===================== ASSISTANT DOCK ===================== -->
+      <Border Grid.Row="2" Background="#1A1D22" BorderBrush="#262A30" BorderThickness="0,1,0,0">
+        <Grid RowDefinitions="Auto,Auto">
+
+          <!-- Conversation (collapsible) -->
+          <Border IsVisible="{Binding #ChatToggle.IsChecked}" Height="200" BorderBrush="#262A30" BorderThickness="0,0,0,1" Padding="24,12,24,8">
+            <Grid RowDefinitions="Auto,*">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                <TextBlock Text="Conversation" Classes="eyebrow" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Clear" Classes="sm" Command="{Binding ClearChatCommand}"/>
+              </Grid>
               <ScrollViewer Grid.Row="1">
-                <ItemsControl ItemsSource="{Binding StorageExplorer.Extensions}">
+                <ItemsControl ItemsSource="{Binding Messages}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Border Background="#171A1D" BorderBrush="#2A2E33" BorderThickness="0,0,0,1" Padding="8,6" Margin="0">
-                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                          <!-- Extension color indicator -->
-                          <Border Background="{Binding ColorHex}" CornerRadius="3" Width="14" Height="14" VerticalAlignment="Center"/>
-                          <TextBlock Grid.Column="1" Text="{Binding Extension}" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                          <TextBlock Grid.Column="2" Text="{Binding Category}" Classes="muted" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                          <TextBlock Grid.Column="3" Text="{Binding FormattedSize}" Foreground="#E7E9EC" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                          <TextBlock Grid.Column="4" Text="{Binding FormattedPercent}" Foreground="#98A1AA" FontSize="11" VerticalAlignment="Center"/>
-                        </Grid>
+                      <Border Background="{Binding Background}" BorderBrush="#2E333A" BorderThickness="1" CornerRadius="10"
+                              Padding="14,10" Margin="0,0,0,8" HorizontalAlignment="{Binding Alignment}" MaxWidth="760">
+                        <StackPanel Spacing="4">
+                          <TextBlock Text="{Binding Author}" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="1.1" Foreground="#4D96F0"/>
+                          <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" FontSize="12.5" LineHeight="19" Foreground="#E6E8EB"/>
+                        </StackPanel>
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -286,565 +955,44 @@
               </ScrollViewer>
             </Grid>
           </Border>
-        </Grid>
 
-        <!-- Divider / Splitter -->
-        <GridSplitter Grid.Row="3" Height="10" Background="Transparent" ResizeDirection="Rows"/>
-
-        <!-- Bottom: Interactive squarified disk map -->
-        <Border Grid.Row="4" Classes="card" Padding="0">
-          <Grid RowDefinitions="Auto,*">
-            <Grid Margin="12,9,12,8" ColumnDefinitions="*,Auto">
-              <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="DISK MAP" FontSize="10" FontWeight="SemiBold" Classes="muted"/>
-                <TextBlock Text="Each block is sized by file usage" FontSize="11" Classes="muted"/>
-              </StackPanel>
-              <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.ScannedFilesText}" FontSize="11" Classes="muted"/>
-            </Grid>
-            <controls:TreemapControl Grid.Row="1" x:Name="TreemapDisplay"
-                                     Items="{Binding StorageExplorer.TreemapItems}"
-                                     SelectedItem="{Binding StorageExplorer.SelectedTreemapItem, Mode=TwoWay}"
-                                     HoveredItem="{Binding StorageExplorer.HoveredTreemapItem, Mode=TwoWay}"/>
-          </Grid>
-        </Border>
-
-        <!-- Inspection Info & Action Toolbar -->
-        <Border Grid.Row="5" Background="#1A1D20" BorderBrush="#2A2E33" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,8,0,0">
-          <Grid ColumnDefinitions="*,Auto">
-            <!-- Inspection status info -->
-            <TextBlock Text="{Binding StorageExplorer.HoveredInfoText}"
-                       VerticalAlignment="Center" FontSize="12" Foreground="#D9DEE3" TextTrimming="CharacterEllipsis"/>
-
-            <!-- Action buttons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsEnabled="{Binding StorageExplorer.HasSelection}">
-              <Button Content="Reveal" ToolTip.Tip="Open in File Manager"
-                      Command="{Binding StorageExplorer.OpenFolderCommand}" Padding="8,4" FontSize="11"/>
-              <Button Content="Terminal" ToolTip.Tip="Open terminal here"
-                      Command="{Binding StorageExplorer.OpenTerminalCommand}" Padding="8,4" FontSize="11"/>
-              <Button Content="Copy path" ToolTip.Tip="Copy path to clipboard"
-                      Command="{Binding StorageExplorer.CopyPathCommand}" Padding="8,4" FontSize="11"/>
-              <Button Content="Move to trash" Classes="action-danger" ToolTip.Tip="Move to Trash"
-                      Command="{Binding StorageExplorer.MoveToTrashCommand}" Padding="8,4" FontSize="11"/>
-              <Button Content="Ask assistant" ToolTip.Tip="Ask AI about this file"
-                      Classes="action-primary" Command="{Binding StorageExplorer.AskAiAboutSelectedCommand}" Padding="8,4" FontSize="11"/>
-            </StackPanel>
-          </Grid>
-        </Border>
-      </Grid>
-
-      <!-- VIEW 2: AI CLEANUP ASSISTANT -->
-      <ScrollViewer Grid.Row="2" IsVisible="{Binding IsCleanupActive}" Padding="24,20">
-        <StackPanel Spacing="18">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="4">
-              <TextBlock Text="AI Cleanup Assistant" Classes="title"/>
-              <TextBlock Text="Safely identify and reclaim gigabytes of caches, orphaned packages, and dev artifacts." Classes="muted" FontSize="12"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="Scan" Classes="action-primary" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
-              <Button Content="Clean selected" Background="#B94A4A" Foreground="#FFFFFF" FontWeight="SemiBold"
-                      Command="{Binding Cleanup.CleanSelectedCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
-            </StackPanel>
-          </Grid>
-
-          <!-- Metric Cards -->
-          <Grid ColumnDefinitions="*,*,*">
-            <Border Classes="card">
-              <StackPanel Spacing="4">
-                <TextBlock Text="TOTAL DETECTED" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" FontSize="24" FontWeight="Bold" Foreground="#7BA7FF"/>
-                <TextBlock Text="Found across cache &amp; temp targets" Classes="muted" FontSize="11"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Classes="card" Margin="12,0">
-              <StackPanel Spacing="4">
-                <TextBlock Text="SELECTED TO CLEAN" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding Cleanup.SelectedReclaimableText}" FontSize="24" FontWeight="Bold" Foreground="#35D3A0"/>
-                <TextBlock Text="Will be safely reclaimed" Classes="muted" FontSize="11"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="2" Classes="card">
-              <StackPanel Spacing="4">
-                <TextBlock Text="STATUS" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding Cleanup.StatusMessage}" FontSize="13" TextWrapping="Wrap" Foreground="#FFFFFF"/>
-              </StackPanel>
-            </Border>
-          </Grid>
-
-          <!-- Controls: Category filter & Select All / Deselect All -->
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="Select All" Padding="10,5" FontSize="12" Command="{Binding Cleanup.SelectAllCommand}"/>
-              <Button Content="Deselect All" Padding="10,5" FontSize="12" Command="{Binding Cleanup.DeselectAllCommand}"/>
-            </StackPanel>
-
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Category:" Classes="muted" VerticalAlignment="Center" FontSize="12"/>
-              <Button Content="All" Padding="8,4" FontSize="11" Command="{Binding Cleanup.CleanSelectedCommand}"/>
-            </StackPanel>
-          </Grid>
-
-          <!-- List of Reclaimable Items -->
-          <Border Classes="card">
-            <ItemsControl ItemsSource="{Binding Cleanup.FilteredItems}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Background="#0C1724" CornerRadius="8" Padding="12" Margin="0,0,0,8">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                      <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-
-                      <StackPanel Grid.Column="1" Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"/>
-                          <Border Background="{Binding BadgeColor}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding RiskLevel}" FontSize="10" FontWeight="Bold" Foreground="#0A141E"/>
-                          </Border>
-                          <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding Description}" Classes="muted" FontSize="12"/>
-                        <TextBlock Text="{Binding Path}" Foreground="#6C7F93" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                      </StackPanel>
-
-                      <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Foreground="#35D3A0"
-                                 FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="16,0"/>
-
-                      <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <Button Content="Reveal" Padding="8,4" FontSize="11"
-                                Command="{Binding $parent[Window].DataContext.Cleanup.OpenItemLocationCommand}"
-                                CommandParameter="{Binding}"/>
-                        <Button Content="Ask assistant" Padding="8,4" FontSize="11" Classes="action-primary"
-                                Command="{Binding $parent[Window].DataContext.Cleanup.AskAiAboutItemCommand}"
-                                CommandParameter="{Binding}"/>
-                      </StackPanel>
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Border>
-        </StackPanel>
-      </ScrollViewer>
-
-      <!-- VIEW 3: OVERVIEW -->
-      <ScrollViewer Grid.Row="2" IsVisible="{Binding IsOverviewActive}" Padding="30,24">
-        <StackPanel Spacing="22">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel>
-              <TextBlock Text="{Binding Greeting}" Classes="muted"/>
-              <TextBlock Text="System Overview" Classes="title"/>
-              <TextBlock Text="Live utilisation, storage pressure, and active workloads." Classes="muted" Margin="0,4,0,0"/>
-            </StackPanel>
-            <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
-          </Grid>
-
-          <!-- Gauge Cards -->
-          <Grid ColumnDefinitions="*,*,*">
-            <Border Classes="card">
-              <StackPanel Spacing="10">
-                <TextBlock Text="MEMORY UTILISATION" Classes="muted" FontSize="10" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding MemoryHeadline}" FontSize="24" FontWeight="SemiBold"/>
-                <ProgressBar Value="{Binding MemoryPercent}" Maximum="100"/>
-                <TextBlock Text="{Binding MemoryDetail}" Classes="muted" FontSize="12"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Classes="card" Margin="14,0">
-              <StackPanel Spacing="10">
-                <TextBlock Text="STORAGE UTILISATION" Classes="muted" FontSize="10" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding StorageHeadline}" FontSize="24" FontWeight="SemiBold"/>
-                <ProgressBar Value="{Binding StoragePercent}" Maximum="100" Foreground="#7BA7FF"/>
-                <TextBlock Text="{Binding StorageDetail}" Classes="muted" FontSize="12"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="2" Classes="card">
-              <StackPanel Spacing="10">
-                <TextBlock Text="CPU LOAD" Classes="muted" FontSize="10" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding CpuHeadline}" FontSize="24" FontWeight="SemiBold"/>
-                <ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#F6B75D"/>
-                <TextBlock Text="{Binding CpuDetail}" Classes="muted" FontSize="12"/>
-              </StackPanel>
-            </Border>
-          </Grid>
-
-          <!-- Recommendations -->
-          <Border Classes="card">
-            <StackPanel Spacing="14">
-              <TextBlock Text="What Needs Attention" FontSize="16" FontWeight="SemiBold"/>
-              <ItemsControl ItemsSource="{Binding Recommendations}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Border Background="#0B1622" CornerRadius="8" Padding="12" Margin="0,0,0,8">
-                      <Grid ColumnDefinitions="6,*,Auto">
-                        <Border Background="{Binding Accent}" CornerRadius="3"/>
-                        <StackPanel Grid.Column="1" Spacing="2" Margin="12,0,0,0">
-                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
-                          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding Impact}" Foreground="#A8C8FF" VerticalAlignment="Center"/>
-                      </Grid>
-                    </Border>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </StackPanel>
-          </Border>
-
-          <!-- Top Memory & Disks -->
-          <Grid ColumnDefinitions="*,*">
-            <Border Classes="card">
-              <StackPanel Spacing="10">
-                <TextBlock Text="Top Memory Users" FontSize="16" FontWeight="SemiBold"/>
-                <ItemsControl ItemsSource="{Binding TopProcesses}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Grid ColumnDefinitions="*,Auto" Margin="0,4">
-                        <TextBlock Text="{Binding Name}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Memory}" Classes="muted"/>
-                      </Grid>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Classes="card" Margin="14,0,0,0">
-              <StackPanel Spacing="10">
-                <TextBlock Text="Storage Drives" FontSize="16" FontWeight="SemiBold"/>
-                <ItemsControl ItemsSource="{Binding DiskItems}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <StackPanel Margin="0,4">
-                        <Grid ColumnDefinitions="*,Auto">
-                          <TextBlock Text="{Binding Name}"/>
-                          <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="muted"/>
-                        </Grid>
-                        <ProgressBar Value="{Binding Percent}" Maximum="100" Margin="0,5,0,0"/>
-                      </StackPanel>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </Border>
-          </Grid>
-        </StackPanel>
-      </ScrollViewer>
-
-      <!-- VIEW 4: PERFORMANCE & PROCESSES -->
-      <Grid Grid.Row="2" IsVisible="{Binding IsPerformanceActive}" Margin="20" RowDefinitions="Auto,Auto,*">
-        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-          <StackPanel Spacing="4">
-          <TextBlock Text="Processes" Classes="title"/>
-            <TextBlock Text="{Binding Performance.StatusMessage}" Classes="muted" FontSize="12"/>
-          </StackPanel>
-          <Button Content="Refresh" Command="{Binding Performance.RefreshCommand}"/>
-        </Grid>
-
-        <!-- Metric bar + Search -->
-        <Border Grid.Row="1" Classes="card" Margin="0,0,0,12" Padding="12">
-          <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,16,0">
-              <TextBlock Text="CPU:" Classes="muted" FontSize="12"/>
-              <TextBlock Text="{Binding Performance.CpuText}" FontWeight="Bold" Foreground="#F6B75D"/>
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,16,0">
-              <TextBlock Text="RAM:" Classes="muted" FontSize="12"/>
-              <TextBlock Text="{Binding Performance.MemoryHeadline}" FontWeight="Bold" Foreground="#35D3A0"/>
-            </StackPanel>
-            <TextBox Grid.Column="2" Text="{Binding Performance.SearchFilter}" Watermark="Filter processes by name or PID..." VerticalContentAlignment="Center" Margin="0,0,16,0"/>
-            <Button Grid.Column="3" Content="End task" Classes="action-danger"
-                    Command="{Binding Performance.TerminateProcessCommand}"
-                    IsEnabled="{Binding Performance.HasSelectedProcess}"/>
-          </Grid>
-        </Border>
-
-        <!-- Process List Table -->
-        <Border Grid.Row="2" Classes="card">
-          <Grid RowDefinitions="Auto,*">
-            <Grid ColumnDefinitions="65,*,105,100" Margin="8,0,8,8">
-              <TextBlock Text="PID" Classes="muted" FontSize="12"/>
-              <TextBlock Grid.Column="1" Text="Process Name" Classes="muted" FontSize="12"/>
-              <TextBlock Grid.Column="2" Text="Category" Classes="muted" FontSize="12"/>
-              <TextBlock Grid.Column="3" Text="Memory" Classes="muted" FontSize="12" HorizontalAlignment="Right"/>
+          <!-- Sphere + prompt -->
+          <Grid Grid.Row="1" ColumnDefinitions="104,*,Auto" Margin="14,4,24,10">
+            <Grid Width="96" Height="96" VerticalAlignment="Center">
+              <controls:AssistantSphere IsActive="{Binding IsAiThinking}" Accent="#4D96F0"/>
             </Grid>
 
-            <ListBox Grid.Row="1" ItemsSource="{Binding Performance.FilteredProcesses}"
-                     SelectedItem="{Binding Performance.SelectedProcess, Mode=TwoWay}">
-              <ListBox.ItemTemplate>
-                <DataTemplate>
-                  <Grid ColumnDefinitions="65,*,105,100" Margin="0,2">
-                    <TextBlock Text="{Binding Id}" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="3" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}"
-                               Foreground="#35D3A0" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                  </Grid>
-                </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
-          </Grid>
-        </Border>
-      </Grid>
-
-      <!-- LIVE RESOURCES -->
-      <ScrollViewer Grid.Row="2" IsVisible="{Binding IsLiveResourcesActive}" Padding="24,20">
-        <StackPanel Spacing="16">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Live Resources" Classes="title"/>
-              <TextBlock Text="System usage and the processes contributing to it. Refreshes every 2 seconds." Classes="muted" FontSize="12"/>
-            </StackPanel>
-            <Button Grid.Column="1" Content="🔄 Refresh" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
-          </Grid>
-
-          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
-            <Border Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,8,8">
-              <StackPanel Spacing="8">
-                <TextBlock Text="CPU" Classes="muted" FontSize="11" FontWeight="Bold"/>
-                <TextBlock Text="thinking power" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding CpuResourceText}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
-                <ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#00B7F4"/>
-                <Border BorderBrush="{Binding CpuStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
-                  <TextBlock Text="{Binding CpuStatus}" Foreground="{Binding CpuStatusColor}" FontSize="9" FontWeight="Bold"/>
-                </Border>
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="8,0,0,8">
-              <StackPanel Spacing="8">
-                <TextBlock Text="MEMORY" Classes="muted" FontSize="11" FontWeight="Bold"/>
-                <TextBlock Text="room for open apps" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding MemoryResourcePercent, StringFormat='{}{0:F0}%'}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
-                <ProgressBar Value="{Binding MemoryResourcePercent}" Maximum="100" Foreground="{Binding MemoryStatusColor}"/>
-                <Border BorderBrush="{Binding MemoryStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
-                  <TextBlock Text="{Binding MemoryStatus}" Foreground="{Binding MemoryStatusColor}" FontSize="9" FontWeight="Bold"/>
-                </Border>
-                <TextBlock Text="{Binding MemoryResourceText}" Classes="muted" FontSize="10"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Row="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,8,0">
-              <StackPanel Spacing="8">
-                <TextBlock Text="DISK" Classes="muted" FontSize="11" FontWeight="Bold"/>
-                <TextBlock Text="storage used" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding DiskResourcePercent, StringFormat='{}{0:F0}%'}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
-                <ProgressBar Value="{Binding DiskResourcePercent}" Maximum="100" Foreground="{Binding DiskStatusColor}"/>
-                <Border BorderBrush="{Binding DiskStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
-                  <TextBlock Text="{Binding DiskStatus}" Foreground="{Binding DiskStatusColor}" FontSize="9" FontWeight="Bold"/>
-                </Border>
-                <TextBlock Text="{Binding StorageHeadline}" Classes="muted" FontSize="10"/>
-              </StackPanel>
-            </Border>
-            <Border Grid.Row="1" Grid.Column="1" Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16" Margin="8,0,0,0">
-              <StackPanel Spacing="8">
-                <TextBlock Text="GRAPHICS" Classes="muted" FontSize="11" FontWeight="Bold"/>
-                <TextBlock Text="GPU" Classes="muted" FontSize="11"/>
-                <TextBlock Text="{Binding GpuText}" FontSize="30" FontWeight="Bold" Margin="0,4,0,0"/>
-                <ProgressBar Value="{Binding GpuPercent}" Maximum="100" Foreground="#00B7F4" IsVisible="{Binding IsGpuAvailable}"/>
-                <Border BorderBrush="{Binding GpuStatusColor}" BorderThickness="1" Padding="6,2" HorizontalAlignment="Left">
-                  <TextBlock Text="{Binding GpuStatus}" Foreground="{Binding GpuStatusColor}" FontSize="9" FontWeight="Bold"/>
-                </Border>
-              </StackPanel>
-            </Border>
-          </Grid>
-
-          <Border Background="#10161D" BorderBrush="#1E2832" BorderThickness="1" CornerRadius="2" Padding="16">
-            <StackPanel Spacing="12">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="{Binding UsageBreakdownTitle}" Classes="muted" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Grid.Column="1" Content="{Binding ResourceSortButtonText}" Command="{Binding CycleResourceMetricCommand}" Padding="10,5" FontSize="11"/>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+              <Grid ColumnDefinitions="Auto,*">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
+                  <TextBlock Text="Assistant" Classes="cardtitle"/>
+                  <TextBlock Text="· ready" Classes="dim" FontSize="10.5" IsVisible="{Binding !IsAiThinking}"/>
+                  <TextBlock Text="· analysing…" Foreground="#4D96F0" FontSize="10.5" IsVisible="{Binding IsAiThinking}"/>
+                </StackPanel>
+                <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Content="Break down scan" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is taking up all my space? Break down the scan."/>
+                    <Button Content="Safe cleanups" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up to free disk space?"/>
+                    <Button Content="node_modules" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is node_modules, and can I delete it?"/>
+                    <Button Content="Check memory" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?"/>
+                  </StackPanel>
+                </ScrollViewer>
               </Grid>
-              <ItemsControl ItemsSource="{Binding ResourceGroups}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <StackPanel Spacing="6" Margin="0,3">
-                      <Grid ColumnDefinitions="Auto,150,*,Auto,Auto" MinHeight="28">
-                        <Border Grid.Column="0" Width="10" Height="10" Background="{Binding Color}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center"/>
-                        <ProgressBar Grid.Column="2" Value="{Binding Percent}" Maximum="100" Foreground="{Binding Color}" Margin="8,0" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="3" Text="{Binding UsageText}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                        <Button Grid.Column="4" Content="{Binding ToggleText}" Command="{Binding ToggleExpandedCommand}" Padding="7,3" FontSize="10" Margin="14,0,0,0"/>
-                      </Grid>
-                      <StackPanel IsVisible="{Binding IsExpanded}" Spacing="4" Margin="20,0,0,8">
-                        <Grid ColumnDefinitions="*,55,65,65,80" Margin="0,0,12,2">
-                          <TextBlock Text="PROCESS" Classes="muted" FontSize="9"/>
-                          <TextBlock Grid.Column="1" Text="PID" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
-                          <TextBlock Grid.Column="2" Text="CPU" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
-                          <TextBlock Grid.Column="3" Text="GPU" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
-                          <TextBlock Grid.Column="4" Text="RAM" Classes="muted" FontSize="9" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <ItemsControl ItemsSource="{Binding Processes}">
-                          <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                              <Border BorderBrush="#1E2832" BorderThickness="0,0,0,1" Padding="0,4">
-                                <Grid ColumnDefinitions="*,55,65,65,80" Margin="0,0,12,0">
-                                  <TextBlock Text="{Binding Name}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                  <TextBlock Grid.Column="1" Text="{Binding Id}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                  <TextBlock Grid.Column="2" Text="{Binding CpuText}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                  <TextBlock Grid.Column="3" Text="{Binding GpuText}" Classes="muted" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                  <TextBlock Grid.Column="4" Text="{Binding MemoryText}" Foreground="#35D3A0" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
-                              </Border>
-                            </DataTemplate>
-                          </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                      </StackPanel>
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+              <TextBox Text="{Binding Prompt}" Watermark="Ask about the current scan, disk usage, memory or the selected file…"
+                       MinHeight="40" VerticalContentAlignment="Center" FontSize="12.5">
+                <TextBox.KeyBindings>
+                  <KeyBinding Gesture="Enter" Command="{Binding SendCommand}"/>
+                </TextBox.KeyBindings>
+              </TextBox>
             </StackPanel>
-          </Border>
-        </StackPanel>
-      </ScrollViewer>
 
-      <!-- VIEW 5: SETTINGS -->
-      <ScrollViewer Grid.Row="2" IsVisible="{Binding IsSettingsActive}" Padding="30,24">
-        <StackPanel Spacing="20" MaxWidth="720" HorizontalAlignment="Left">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Settings" Classes="title"/>
-            <TextBlock Text="Configure providers, model selection, and deletion protections." Classes="muted" FontSize="12"/>
-          </StackPanel>
-
-          <Border Classes="card">
-            <StackPanel Spacing="16">
-              <TextBlock Text="Cloud AI Credentials" FontWeight="SemiBold" FontSize="15"/>
-
-              <StackPanel Spacing="6">
-                <TextBlock Text="OpenRouter API Key:" Classes="muted" FontSize="12"/>
-                <TextBox Text="{Binding Settings.OpenRouterKey}" PasswordChar="•" Watermark="sk-or-v1-..."/>
-                <TextBlock Text="Allows using models like google/gemma-4-31b-it:free or any open-weights model via OpenRouter." Classes="muted" FontSize="11"/>
-              </StackPanel>
-
-              <StackPanel Spacing="6">
-                <TextBlock Text="OpenAI API Key (Optional):" Classes="muted" FontSize="12"/>
-                <TextBox Text="{Binding Settings.OpenAiKey}" PasswordChar="•" Watermark="sk-..."/>
-              </StackPanel>
-
-              <StackPanel Spacing="6">
-                <TextBlock Text="AI Model Slug:" Classes="muted" FontSize="12"/>
-                <TextBox Text="{Binding Settings.SelectedModel}" Watermark="google/gemma-4-31b-it:free"/>
-              </StackPanel>
-
-              <StackPanel Spacing="6">
-                <TextBlock Text="Custom Endpoint (Optional):" Classes="muted" FontSize="12"/>
-                <TextBox Text="{Binding Settings.CustomEndpoint}" Watermark="https://openrouter.ai/api/v1/chat/completions"/>
-              </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom" Margin="12,0,0,6">
+              <ToggleButton x:Name="ChatToggle" IsChecked="True" Content="History" Height="40" Padding="14,0"/>
+              <Button Content="Ask" Classes="primary" Command="{Binding SendCommand}" Height="40" Padding="26,0"/>
             </StackPanel>
-          </Border>
-
-          <Border Classes="card">
-            <StackPanel Spacing="14">
-              <TextBlock Text="Safety Protections" FontWeight="SemiBold" FontSize="15"/>
-              <CheckBox IsChecked="{Binding Settings.SafeMode}" Content="Protect critical system directories (/, /usr, /bin, /etc, /boot)" IsEnabled="False"/>
-              <TextBlock Text="Safe mode prevents accidental deletion of essential operating system and user root directories." Classes="muted" FontSize="11"/>
-            </StackPanel>
-          </Border>
-
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <Button Content="Save settings" Classes="action-primary" Command="{Binding Settings.SaveCommand}"/>
-            <Button Content="Reload from .env" Command="{Binding Settings.ReloadCommand}"/>
-            <TextBlock Text="{Binding Settings.StatusMessage}" Classes="muted" VerticalAlignment="Center" FontSize="12" Margin="12,0,0,0"/>
-          </StackPanel>
-        </StackPanel>
-      </ScrollViewer>
-    </Grid>
-
-    <!-- RIGHT SIDEBAR: AI SYSTEM & STORAGE COPILOT -->
-    <Border Grid.Column="2" Grid.RowSpan="2" IsVisible="False" Background="#171A1D" BorderBrush="#2A2E33" BorderThickness="1,0,0,0" Padding="16">
-      <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Header -->
-        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-          <StackPanel Spacing="2">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Assistant" FontWeight="SemiBold" FontSize="15"/>
-              <Border Background="#253A2B" CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
-                <TextBlock Text="ONLINE" Foreground="#8DD29C" FontSize="9" FontWeight="SemiBold"/>
-              </Border>
-            </StackPanel>
-            <TextBlock Text="Disk usage, files, and safe cleanup" Classes="muted" FontSize="11"/>
-          </StackPanel>
-          <Button Grid.Column="1" Content="Clear" ToolTip.Tip="Clear chat history"
-                  Command="{Binding ClearChatCommand}" Padding="6,4" FontSize="12"/>
-        </Grid>
-
-        <!-- Chat History -->
-        <ScrollViewer Grid.Row="1" Margin="0,4,0,14">
-          <ItemsControl ItemsSource="{Binding Messages}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Background="{Binding Background}" BorderBrush="#30353B" BorderThickness="1" CornerRadius="6" Padding="12,10"
-                        Margin="0,0,0,10" HorizontalAlignment="{Binding Alignment}" MaxWidth="330">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="{Binding Author}" FontSize="10" FontWeight="SemiBold" Foreground="#80B9EC"/>
-                    <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" FontSize="12.5" LineHeight="18"/>
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
-
-        <!-- Bottom Controls: Quick prompts + Prompt Box + Send -->
-        <StackPanel Grid.Row="2" Spacing="8">
-          <!-- Thinking indicator -->
-          <StackPanel IsVisible="{Binding IsAiThinking}" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
-            <ProgressBar IsIndeterminate="True" Width="80"/>
-            <TextBlock Text="Analyzing…" Classes="muted" FontSize="11"/>
-          </StackPanel>
-
-          <!-- Quick Action Prompts -->
-          <WrapPanel>
-            <Button Content="Break down scan" Command="{Binding QuickAskCommand}"
-                    CommandParameter="What is taking up all my space? Break down the scan." Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
-            <Button Content="Safe cleanups" Command="{Binding QuickAskCommand}"
-                    CommandParameter="What can I safely clean up to free disk space?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
-            <Button Content="node_modules" Command="{Binding QuickAskCommand}"
-                    CommandParameter="What is node_modules, and can I delete it?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
-            <Button Content="Check memory" Command="{Binding QuickAskCommand}"
-                    CommandParameter="Why is my RAM being used?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
-          </WrapPanel>
-
-          <!-- Prompt Box -->
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBox Text="{Binding Prompt}" Watermark="Ask about this system…"
-                     AcceptsReturn="True" MinHeight="44" MaxHeight="90" TextWrapping="Wrap"/>
-            <Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}"
-                    Classes="action-primary" Margin="8,0,0,0" VerticalAlignment="Stretch"/>
           </Grid>
-          <TextBlock Text="Context-aware answers from current system data" Classes="muted" FontSize="10"/>
-        </StackPanel>
-      </Grid>
-    </Border>
-
-    <!-- Bottom analysis console: the assistant stays available without taking workspace width. -->
-    <Border Grid.Column="1" Grid.Row="1" Background="#171A1D" BorderBrush="#2A2E33" BorderThickness="0,1,0,0" Padding="16,10">
-      <Grid RowDefinitions="Auto,*,Auto">
-        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,8">
-          <TextBlock Text="ANALYSIS CONSOLE" Classes="muted" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Grid.Column="1" Text="Ask about the selected file or current scan" Classes="muted" FontSize="11" VerticalAlignment="Center" Margin="12,0,0,0"/>
-          <Button Grid.Column="2" Content="Clear" Command="{Binding ClearChatCommand}" Padding="8,3" FontSize="11"/>
         </Grid>
-
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-          <ItemsControl ItemsSource="{Binding Messages}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8"/></ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Background="{Binding Background}" BorderBrush="#343940" BorderThickness="1" CornerRadius="5" Padding="10,7" MaxWidth="420">
-                  <StackPanel Spacing="2">
-                    <TextBlock Text="{Binding Author}" FontSize="10" FontWeight="SemiBold" Foreground="#80B9EC"/>
-                    <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" FontSize="12" MaxHeight="52" TextTrimming="CharacterEllipsis"/>
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
-
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">
-          <TextBox Text="{Binding Prompt}" Watermark="Ask about the current scan, disk usage, or selected file…" MinHeight="36" VerticalContentAlignment="Center"/>
-          <TextBlock Grid.Column="1" IsVisible="{Binding IsAiThinking}" Text="Analyzing…" Classes="muted" FontSize="11" VerticalAlignment="Center" Margin="12,0"/>
-          <Button Grid.Column="2" Content="Ask" Command="{Binding SendCommand}" Classes="action-primary" Margin="8,0,0,0"/>
-        </Grid>
-      </Grid>
-    </Border>
+      </Border>
+    </Grid>
   </Grid>
 </Window>

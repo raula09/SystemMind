@@ -107,6 +107,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string GpuText => _gpuText;
     public double GpuPercent => _snapshot?.GpuPercent ?? 0;
     public bool IsGpuAvailable => _snapshot?.GpuPercent.HasValue == true;
+    public string GpuNameText => _snapshot?.Hardware?.GpuName ?? "Unavailable";
+    public string GpuMemoryText => _snapshot?.Hardware?.GpuMemoryGb is { } memory ? $"{memory:F1} GB VRAM" : "VRAM unavailable";
+    public string BatteryText => _snapshot?.Hardware?.BatteryPercent is { } percent ? $"{percent:F0}%" : "Unavailable";
+    public string BatteryStatusText => _snapshot?.Hardware?.BatteryStatus ?? "No battery detected";
+    public string BatteryHealthText => _snapshot?.Hardware?.BatteryHealthPercent is { } health ? $"{health:F0}%" : "Unavailable";
+    public string ThermalText => _snapshot?.Hardware?.CpuTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
+    public string ThermalCpuText => _snapshot?.Hardware?.CpuTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
+    public string ThermalMaxText => _snapshot?.Hardware?.MaxTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
+    public string NetworkDownText => $"↓ {FormatRate(_snapshot?.Hardware?.NetworkReceiveBytesPerSecond ?? 0)}";
+    public string NetworkUpText => $"↑ {FormatRate(_snapshot?.Hardware?.NetworkSendBytesPerSecond ?? 0)}";
+    public string NetworkTotalInText => FormatBytes(_snapshot?.Hardware?.NetworkReceivedBytes ?? 0);
+    public string NetworkTotalOutText => FormatBytes(_snapshot?.Hardware?.NetworkSentBytes ?? 0);
     public string UsageBreakdownTitle
     {
         get
@@ -224,10 +236,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
         foreach (var d in _snapshot.Disks)
             DiskItems.Add(new DiskRow(d.Name, $"{d.UsedGb:F0} / {d.TotalGb:F0} GB", d.TotalGb == 0 ? 0 : d.UsedGb / d.TotalGb * 100));
 
-        _gpuText = _snapshot.GpuPercent is { } gpu ? $"{gpu:F0}%" : "Unavailable";
+        _gpuText = _snapshot.GpuPercent is { } gpu
+            ? $"{gpu:F0}%"
+            : _snapshot.Hardware?.GpuName is not null ? "N/A" : "Unavailable";
         OnChanged(nameof(GpuText));
         OnChanged(nameof(GpuPercent));
         OnChanged(nameof(IsGpuAvailable));
+        OnChanged(nameof(GpuNameText));
+        OnChanged(nameof(GpuMemoryText));
+        OnChanged(nameof(BatteryText));
+        OnChanged(nameof(BatteryStatusText));
+        OnChanged(nameof(BatteryHealthText));
+        OnChanged(nameof(ThermalText));
+        OnChanged(nameof(ThermalCpuText));
+        OnChanged(nameof(ThermalMaxText));
+        OnChanged(nameof(NetworkDownText));
+        OnChanged(nameof(NetworkUpText));
+        OnChanged(nameof(NetworkTotalInText));
+        OnChanged(nameof(NetworkTotalOutText));
         OnChanged(nameof(UsageBreakdownTitle));
         OnChanged(nameof(ResourceSortButtonText));
         OnChanged(nameof(CpuStatus));
@@ -361,6 +387,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private static string StatusFor(double value, double busyAt, double fullAt, string normal, string busy, string full) =>
         value >= fullAt ? full : value >= busyAt ? busy : normal;
+
+    private static string FormatRate(double bytesPerSecond) => $"{FormatBytes(bytesPerSecond)}/s";
+
+    private static string FormatBytes(double bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = Math.Max(0, bytes);
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return unit == 0 ? $"{value:F0} {units[unit]}" : $"{value:F1} {units[unit]}";
+    }
 
     private static string ColorFor(double value, double busyAt, double fullAt) =>
         value >= fullAt ? "#F0525F" : value >= busyAt ? "#F5B335" : "#35D3A0";

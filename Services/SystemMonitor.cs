@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Win32;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using SystemMind.Models;
 
 namespace SystemMind.Services;
@@ -12,11 +15,13 @@ public sealed class SystemMonitor
     private readonly Dictionary<int, (TimeSpan Cpu, DateTime SampledAt)> _processCpu = [];
     private (ulong Idle, ulong Kernel, ulong User)? _previousSystemTimes;
     private (ulong Idle, ulong Total)? _previousLinuxCpu;
+    private (long Received, long Sent, DateTime SampledAt)? _previousNetwork;
 
     public SystemSnapshot Capture()
     {
         var (totalGb, usedGb) = ReadMemory();
         var gpuUsage = ReadGpu();
+        var hardware = ReadHardwareTelemetry(gpuUsage);
         var physicalDrives = GetPhysicalDrives();
         var diskUsageList = physicalDrives.Select(d => new DiskUsage(
             d.DisplayName,
@@ -77,7 +82,8 @@ public sealed class SystemMonitor
             diskUsageList,
             sortedProcs,
             gpuUsage.TotalPercent,
-            physicalDrives);
+            physicalDrives,
+            hardware);
     }
 
     public static List<DriveItem> GetPhysicalDrives()
@@ -382,8 +388,231 @@ public sealed class SystemMonitor
         return 0;
     }
 
+    private HardwareTelemetry ReadHardwareTelemetry(GpuUsage gpuUsage)
+    {
+        var (received, sent, receiveRate, sendRate) = ReadNetwork();
+        var battery = ReadBattery();
+        var thermal = ReadThermal();
+        var detectedGpu = ReadGpuDetails();
+        var gpu = (Name: gpuUsage.Name ?? detectedGpu.Name, MemoryGb: gpuUsage.MemoryGb ?? detectedGpu.MemoryGb);
+
+        return new HardwareTelemetry(
+            gpu.Name,
+            gpu.MemoryGb,
+            battery.Percent,
+            battery.Status,
+            battery.HealthPercent,
+            thermal.CpuTemperatureC,
+            thermal.MaxTemperatureC,
+            received,
+            sent,
+            receiveRate,
+            sendRate);
+    }
+
+    private (long Received, long Sent, double ReceiveRate, double SendRate) ReadNetwork()
+    {
+        long received = 0, sent = 0;
+        try
+        {
+            foreach (var network in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (network.OperationalStatus != OperationalStatus.Up ||
+                    network.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel)
+                    continue;
+
+                var stats = network.GetIPv4Statistics();
+                received += stats.BytesReceived;
+                sent += stats.BytesSent;
+            }
+        }
+        catch { }
+
+        var now = DateTime.UtcNow;
+        var receiveRate = 0d;
+        var sendRate = 0d;
+        if (_previousNetwork is { } previous)
+        {
+            var seconds = (now - previous.SampledAt).TotalSeconds;
+            if (seconds > 0)
+            {
+                receiveRate = Math.Max(0, received - previous.Received) / seconds;
+                sendRate = Math.Max(0, sent - previous.Sent) / seconds;
+            }
+        }
+        _previousNetwork = (received, sent, now);
+        return (received, sent, receiveRate, sendRate);
+    }
+
+    private static (double? Percent, string? Status, double? HealthPercent) ReadBattery()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            try
+            {
+                if (GetSystemPowerStatus(out var status) && status.BatteryLifePercent != byte.MaxValue)
+                {
+                    var state = (status.BatteryFlag & 128) != 0 ? "No battery" :
+                        (status.ACLineStatus == 1 ? "Charging" : "Discharging");
+                    return (status.BatteryLifePercent, state, null);
+                }
+            }
+            catch { }
+        }
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return (null, null, null);
+        try
+        {
+            var batteries = Directory.EnumerateDirectories("/sys/class/power_supply")
+                .Where(path => ReadText(Path.Combine(path, "type")).Equals("Battery", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (batteries.Count == 0) return (null, null, null);
+
+            var capacities = batteries.Select(path => ReadDouble(Path.Combine(path, "capacity"))).Where(value => value.HasValue).ToList();
+            var statuses = batteries.Select(path => ReadText(Path.Combine(path, "status"))).Where(value => !string.IsNullOrWhiteSpace(value)).Distinct().ToList();
+            var health = batteries.Select(path => RatioPercent(path, "energy_full", "energy_full_design") ?? RatioPercent(path, "charge_full", "charge_full_design"))
+                .Where(value => value.HasValue).ToList();
+
+            return (
+                capacities.Count == 0 ? null : capacities.Average(),
+                statuses.Contains("Charging", StringComparer.OrdinalIgnoreCase) ? "Charging" : statuses.FirstOrDefault() ?? "Unknown",
+                health.Count == 0 ? null : health.Average());
+        }
+        catch { return (null, null, null); }
+    }
+
+    private static (double? CpuTemperatureC, double? MaxTemperatureC) ReadThermal()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !Directory.Exists("/sys/class/thermal")) return (null, null);
+        try
+        {
+            var readings = Directory.EnumerateDirectories("/sys/class/thermal", "thermal_zone*")
+                .Select(path => (Type: ReadText(Path.Combine(path, "type")), Temp: ReadDouble(Path.Combine(path, "temp"))))
+                .Where(reading => reading.Temp.HasValue)
+                .Select(reading => (reading.Type, Temp: NormalizeTemperature(reading.Temp!.Value)))
+                .Where(reading => reading.Temp is > 0 and < 150)
+                .ToList();
+            if (readings.Count == 0) return (null, null);
+
+            var cpu = readings.Where(reading => new[] { "cpu", "core", "package", "x86" }
+                    .Any(token => reading.Type.Contains(token, StringComparison.OrdinalIgnoreCase)))
+                .Select(reading => (double?)reading.Temp).DefaultIfEmpty(null).Max();
+            return (cpu ?? readings.Max(reading => reading.Temp), readings.Max(reading => reading.Temp));
+        }
+        catch { return (null, null); }
+    }
+
+    private static (string? Name, double? MemoryGb) ReadGpuDetails()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return ReadWindowsGpuDetails();
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !Directory.Exists("/sys/class/drm")) return (null, null);
+        try
+        {
+            var device = EnumerateLinuxGpuDevices().FirstOrDefault();
+            if (device is null) return (null, null);
+
+            var driver = ReadText(Path.Combine(device, "uevent")).Split('\n')
+                .FirstOrDefault(line => line.StartsWith("DRIVER=", StringComparison.OrdinalIgnoreCase))?[7..];
+            var vendor = ReadText(Path.Combine(device, "vendor"));
+            var deviceId = ReadText(Path.Combine(device, "device"));
+            var name = ReadPciGpuName(vendor, deviceId) ?? GpuVendorName(vendor) ?? driver;
+            var memoryBytes = ReadDouble(Path.Combine(device, "mem_info_vram_total"));
+            return (string.IsNullOrWhiteSpace(name) ? null : name, memoryBytes is > 0 ? memoryBytes / Gb : null);
+        }
+        catch { return (null, null); }
+    }
+
+    private static IEnumerable<string> EnumerateLinuxGpuDevices()
+    {
+        if (!Directory.Exists("/sys/class/drm")) return [];
+        return Directory.EnumerateDirectories("/sys/class/drm")
+            .Where(path => Path.GetFileName(path) is var name && name.Length > 4 &&
+                name.StartsWith("card", StringComparison.Ordinal) && name[4..].All(char.IsAsciiDigit))
+            .Select(path => Path.Combine(path, "device"))
+            .Where(Directory.Exists)
+            // Prefer a discrete adapter when both integrated and discrete graphics are present.
+            .OrderByDescending(path => ReadText(Path.Combine(path, "vendor")).Equals("0x10de", StringComparison.OrdinalIgnoreCase) ||
+                                       ReadText(Path.Combine(path, "vendor")).Equals("0x1002", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? ReadPciGpuName(string vendorId, string deviceId)
+    {
+        var normalizedVendor = vendorId.Trim().TrimStart('0', 'x').PadLeft(4, '0');
+        var normalizedDevice = deviceId.Trim().TrimStart('0', 'x').PadLeft(4, '0');
+        foreach (var file in new[] { "/usr/share/hwdata/pci.ids", "/usr/share/misc/pci.ids", "/usr/share/pci.ids" })
+        {
+            if (!File.Exists(file)) continue;
+            try
+            {
+                var inVendor = false;
+                foreach (var line in File.ReadLines(file))
+                {
+                    if (line.Length == 0 || line[0] == '#') continue;
+                    if (!char.IsWhiteSpace(line[0]))
+                    {
+                        inVendor = line.StartsWith(normalizedVendor + " ", StringComparison.OrdinalIgnoreCase);
+                        continue;
+                    }
+                    if (!inVendor || !line.StartsWith('\t')) continue;
+                    var trimmed = line.TrimStart();
+                    if (trimmed.StartsWith(normalizedDevice + " ", StringComparison.OrdinalIgnoreCase))
+                        return trimmed[(normalizedDevice.Length + 1)..].Trim();
+                }
+            }
+            catch { }
+        }
+        return null;
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static (string? Name, double? MemoryGb) ReadWindowsGpuDetails()
+    {
+        const string displayClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}";
+        try
+        {
+            using var root = Registry.LocalMachine.OpenSubKey(displayClass);
+            if (root is null) return (null, null);
+            foreach (var childName in root.GetSubKeyNames().OrderBy(name => name))
+            {
+                using var child = root.OpenSubKey(childName);
+                var name = child?.GetValue("DriverDesc")?.ToString();
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                var rawMemory = child!.GetValue("AdapterRAM");
+                double? memory = rawMemory is null ? null : Convert.ToUInt64(rawMemory, CultureInfo.InvariantCulture) / Gb;
+                return (name, memory is > 0 ? memory : null);
+            }
+        }
+        catch { }
+        return (null, null);
+    }
+
+    private static string ReadText(string path)
+    {
+        try { return File.Exists(path) ? File.ReadAllText(path).Trim() : ""; }
+        catch { return ""; }
+    }
+
+    private static double? ReadDouble(string path) => double.TryParse(ReadText(path), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : null;
+    private static double? RatioPercent(string directory, string current, string design)
+    {
+        var numerator = ReadDouble(Path.Combine(directory, current));
+        var denominator = ReadDouble(Path.Combine(directory, design));
+        return numerator is > 0 && denominator is > 0 ? Math.Clamp(numerator.Value / denominator.Value * 100, 0, 100) : null;
+    }
+    private static double NormalizeTemperature(double value) => value > 500 ? value / 1000d : value;
+    private static string? GpuVendorName(string vendor) => vendor.ToLowerInvariant() switch
+    {
+        "0x10de" => "NVIDIA GPU",
+        "0x1002" or "0x1022" => "AMD GPU",
+        "0x8086" => "Intel GPU",
+        _ => null
+    };
+
     private static GpuUsage ReadGpu()
     {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return ReadLinuxGpuUsage();
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return new GpuUsage(null, new Dictionary<int, double>());
         IntPtr query = IntPtr.Zero, counter = IntPtr.Zero;
         try
@@ -434,17 +663,81 @@ public sealed class SystemMonitor
         finally { if (query != IntPtr.Zero) PdhCloseQuery(query); }
     }
 
-    private sealed record GpuUsage(double? TotalPercent, IReadOnlyDictionary<int, double> ProcessPercent);
+    private static GpuUsage ReadLinuxGpuUsage()
+    {
+        try
+        {
+            var nvidia = ReadNvidiaSmi();
+            if (nvidia is not null) return nvidia;
+
+            // DRM drivers that export gpu_busy_percent provide the same instantaneous metric
+            // shown by their native tools. Not every driver (notably some NVIDIA setups) does.
+            var values = EnumerateLinuxGpuDevices()
+                .Select(path => ReadDouble(Path.Combine(path, "gpu_busy_percent")) ?? ReadDouble(Path.Combine(path, "busy_percent")))
+                .Where(value => value.HasValue)
+                .Select(value => value!.Value)
+                .ToList();
+            return values.Count == 0
+                ? new GpuUsage(null, new Dictionary<int, double>())
+                : new GpuUsage(Math.Clamp(values.Sum(), 0, 100), new Dictionary<int, double>());
+        }
+        catch { return new GpuUsage(null, new Dictionary<int, double>()); }
+    }
+
+    private static GpuUsage? ReadNvidiaSmi()
+    {
+        const string command = "/usr/sbin/nvidia-smi";
+        if (!File.Exists(command)) return null;
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = "--query-gpu=name,utilization.gpu,memory.total --format=csv,noheader,nounits",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            if (process is null) return null;
+            var output = process.StandardOutput.ReadToEnd();
+            if (!process.WaitForExit(750) || process.ExitCode != 0) return null;
+
+            var gpus = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(line => line.Split(',', StringSplitOptions.TrimEntries))
+                .Where(parts => parts.Length >= 3 && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out _) &&
+                                                    double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out _))
+                .Select(parts => (Name: parts[0], Usage: double.Parse(parts[1], CultureInfo.InvariantCulture), MemoryMiB: double.Parse(parts[2], CultureInfo.InvariantCulture)))
+                .ToList();
+            if (gpus.Count == 0) return null;
+
+            var primary = gpus[0];
+            return new GpuUsage(Math.Clamp(primary.Usage, 0, 100), new Dictionary<int, double>(), primary.Name, primary.MemoryMiB / 1024d);
+        }
+        catch { return null; }
+    }
+
+    private sealed record GpuUsage(
+        double? TotalPercent,
+        IReadOnlyDictionary<int, double> ProcessPercent,
+        string? Name = null,
+        double? MemoryGb = null);
 
     [StructLayout(LayoutKind.Sequential)] private struct MemoryStatusEx
     {
         public uint Length, MemoryLoad;
         public ulong TotalPhysical, AvailablePhysical, TotalPageFile, AvailablePageFile, TotalVirtual, AvailableVirtual, AvailableExtendedVirtual;
     }
+    [StructLayout(LayoutKind.Sequential)] private struct SystemPowerStatus
+    {
+        public byte ACLineStatus, BatteryFlag, BatteryLifePercent, SystemStatusFlag;
+        public uint BatteryLifeTime, BatteryFullLifeTime;
+    }
     [StructLayout(LayoutKind.Sequential)] private struct PdhCounterValue { public uint Status; public double DoubleValue; }
     [StructLayout(LayoutKind.Sequential)] private struct PdhFormattedCounterItem { public IntPtr Name; public PdhCounterValue Value; }
 
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx buffer);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetSystemPowerStatus(out SystemPowerStatus systemPowerStatus);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetSystemTimes(out FileTime idle, out FileTime kernel, out FileTime user);
     [StructLayout(LayoutKind.Sequential)] private struct FileTime { public uint Low, High; public ulong ToUInt64() => ((ulong)High << 32) | Low; }
     [DllImport("pdh.dll", CharSet = CharSet.Unicode)] private static extern uint PdhOpenQueryW(string? dataSource, IntPtr userData, out IntPtr query);
