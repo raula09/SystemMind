@@ -40,11 +40,11 @@ public sealed class TreemapControl : Control
     public event EventHandler<TreemapItem>? NodeDoubleClicked;
 
     private readonly Dictionary<string, (IBrush Fill, IPen Pen)> _brushCache = new();
-    private static readonly IPen HoverPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 255, 255)), 1.5);
-    private static readonly IPen SelectedPen = new Pen(new SolidColorBrush(Color.FromRgb(53, 211, 160)), 2.5);
-    private static readonly IPen DefaultBorderPen = new Pen(new SolidColorBrush(Color.FromArgb(90, 7, 16, 25)), 1.0);
-    private static readonly IBrush TextBrush = new SolidColorBrush(Color.FromArgb(240, 255, 255, 255));
-    private static readonly IBrush SubTextBrush = new SolidColorBrush(Color.FromArgb(180, 200, 220, 240));
+    private static readonly IPen HoverPen = new Pen(new SolidColorBrush(Color.FromRgb(235, 238, 241)), 1.5);
+    private static readonly IPen SelectedPen = new Pen(new SolidColorBrush(Color.FromRgb(77, 157, 224)), 2.5);
+    private static readonly IPen DefaultBorderPen = new Pen(new SolidColorBrush(Color.FromRgb(18, 20, 22)), 1.0);
+    private static readonly IBrush TextBrush = new SolidColorBrush(Color.FromArgb(244, 248, 249, 250));
+    private static readonly IBrush SubTextBrush = new SolidColorBrush(Color.FromArgb(205, 217, 222, 227));
 
     static TreemapControl()
     {
@@ -63,9 +63,9 @@ public sealed class TreemapControl : Control
         var bounds = Bounds;
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-        // Draw dark background
+        // A near-black field and sharp cell borders keep dense scans readable.
         context.DrawRectangle(
-            new SolidColorBrush(Color.FromRgb(11, 21, 33)),
+            new SolidColorBrush(Color.FromRgb(18, 20, 22)),
             null,
             new Rect(0, 0, bounds.Width, bounds.Height));
 
@@ -73,12 +73,12 @@ public sealed class TreemapControl : Control
         if (items == null || items.Count == 0)
         {
             var noDataText = new FormattedText(
-                "Scan a directory to generate the WinDirStat treemap visualization",
+                "No scan data — choose a folder, then select Scan",
                 CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
                 Typeface.Default,
                 14,
-                new SolidColorBrush(Color.FromRgb(145, 161, 181)));
+                new SolidColorBrush(Color.FromRgb(152, 161, 170)));
 
             var x = Math.Max(0, (bounds.Width - noDataText.Width) / 2);
             var y = Math.Max(0, (bounds.Height - noDataText.Height) / 2);
@@ -124,7 +124,8 @@ public sealed class TreemapControl : Control
 
     private void DrawItem(DrawingContext context, TreemapItem item, IPen borderPen)
     {
-        var rect = new Rect(item.X, item.Y, item.Width, item.Height);
+        // The fine gutter distinguishes adjacent files while retaining area accuracy.
+        var rect = new Rect(item.X + 0.5, item.Y + 0.5, Math.Max(0, item.Width - 1), Math.Max(0, item.Height - 1));
 
         // Get or cache brush
         if (!_brushCache.TryGetValue(item.ColorHex, out var cached))
@@ -132,7 +133,6 @@ public sealed class TreemapControl : Control
             try
             {
                 var color = Color.Parse(item.ColorHex);
-                // Cushion/depth shading
                 var brush = new SolidColorBrush(color);
                 cached = (brush, borderPen);
                 _brushCache[item.ColorHex] = cached;

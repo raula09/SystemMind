@@ -7,7 +7,7 @@ SystemMind is a native cross-platform disk usage analyzer and system manager bui
 ## 🚀 Key Features
 
 ### 1. 📊 WinDirStat Storage Explorer
-- **High-Throughput Asynchronous Scanner**: Multi-threaded, cancellable recursive scanner with live progress reporting (items/sec, accumulated size, elapsed time).
+- **High-Throughput Asynchronous Scanner**: Multi-threaded, cancellable recursive scanner scanning the full root filesystem (`/`) by default, complete with live progress reporting (items/sec, accumulated size, elapsed time).
 - **Directory Hierarchy View**: Hierarchical folder tree sorted descending by size, complete with formatted units (GB, MB, KB), percent-of-parent bars, file counts, and subfolder counts.
 - **Interactive Cushion Treemap (`TreemapControl`)**:
   - Squarified treemap visualizer rendering files and folders proportional to their disk footprint.

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia.Layout;
+using Avalonia.Threading;
 using SystemMind.Models;
 using SystemMind.Services;
 
@@ -120,16 +121,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         Refresh();
 
-        // Automatically start background scan of Home directory on startup
+        // Automatically start background scan of Root directory (/) on startup
         _ = StorageExplorer.StartScanAsync();
 
         Messages.Add(new ChatMessage(
             "SystemMind",
             "👋 Welcome! I'm your AI System & Storage Advisor.\n\n" +
-            "• **Storage Explorer**: Scan any drive or folder to see a full WinDirStat-style treemap breakdown.\n" +
+            "• **Storage Explorer**: Scanning your entire root filesystem (`/`) to show every file and folder in a full WinDirStat-style treemap.\n" +
             "• **Cleanup Assistant**: Detects caches, junk files, and large dev artifacts.\n" +
             "• **Performance**: Live process manager.\n\n" +
-            "I have already started scanning your Home directory in the background so you can immediately inspect your storage and treemap!",
+            "I am currently scanning the entire root filesystem (`/`) in the background so you can immediately inspect all disk space hogs across the whole system!",
             "#132C3B",
             HorizontalAlignment.Left));
     }
@@ -171,8 +172,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             TopProcesses.Add(new ProcessRow(p.Name, $"{p.MemoryMb:F0} MB"));
 
         DiskItems.Clear();
-        foreach (var d in _snapshot.Disks.Take(4))
+        foreach (var d in _snapshot.Disks)
             DiskItems.Add(new DiskRow(d.Name, $"{d.UsedGb:F0} / {d.TotalGb:F0} GB", d.TotalGb == 0 ? 0 : d.UsedGb / d.TotalGb * 100));
+
+        StorageExplorer.RefreshDrives();
 
         foreach (var name in new[]
         {
@@ -222,7 +225,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 StorageExplorer.TotalFilesScanned,
                 StorageExplorer.TotalBytesScanned);
 
-            Messages.Add(new ChatMessage("SystemMind", answer, "#132C3B", HorizontalAlignment.Left));
+            var aiMessage = new ChatMessage("SystemMind", answer, "#132C3B", HorizontalAlignment.Left, animate: true);
+            Messages.Add(aiMessage);
+            _ = aiMessage.AnimateAsync();
         }
         catch (Exception ex)
         {
@@ -240,8 +245,60 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
 public record Recommendation(string Title, string Detail, string Impact, string Accent);
 public record ProcessRow(string Name, string Memory);
-public record DiskRow(string Name, string Value, double Percent);
-public record ChatMessage(string Author, string Text, string Background, HorizontalAlignment Alignment);
+public record DiskRow(string Name, string Value, double Percent, string MountPoint = "");
+
+public sealed class ChatMessage : INotifyPropertyChanged
+{
+    private string _displayText = "";
+
+    public ChatMessage(string author, string text, string background, HorizontalAlignment alignment, bool animate = false)
+    {
+        Author = author;
+        Text = text;
+        Background = background;
+        Alignment = alignment;
+        DisplayText = animate ? string.Empty : text;
+    }
+
+    public string Author { get; }
+    public string Text { get; }
+    public string Background { get; }
+    public HorizontalAlignment Alignment { get; }
+
+    public string DisplayText
+    {
+        get => _displayText;
+        set
+        {
+            if (_displayText != value)
+            {
+                _displayText = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayText)));
+            }
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public async Task AnimateAsync()
+    {
+        if (string.IsNullOrEmpty(Text) || Author != "SystemMind")
+        {
+            DisplayText = Text;
+            return;
+        }
+
+        var final = Text;
+        DisplayText = string.Empty;
+
+        for (var i = 1; i <= final.Length; i++)
+        {
+            var next = final.Substring(0, i);
+            await Dispatcher.UIThread.InvokeAsync(() => DisplayText = next);
+            await Task.Delay(12);
+        }
+    }
+}
 
 public sealed class RelayCommand(Action<object?> action) : ICommand
 {

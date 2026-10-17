@@ -58,6 +58,8 @@ public class CleanupAndPerformanceTests
         var vm = new StorageExplorerViewModel();
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
+        Assert.Equal("/", vm.ScanPath); // Defaults to root /
+
         vm.SetQuickPathCommand.Execute("~");
         Assert.Equal(home, vm.ScanPath);
 

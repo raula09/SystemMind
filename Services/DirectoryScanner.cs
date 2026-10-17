@@ -32,9 +32,10 @@ public sealed class DirectoryScanner
                 throw new DirectoryNotFoundException($"Directory not found: {rootPath}");
             }
 
+            var isRoot = rootDir.FullName is "/" or "\\";
             var rootNode = new FileSystemNode
             {
-                Name = string.IsNullOrEmpty(rootDir.Name) ? rootDir.FullName : rootDir.Name,
+                Name = isRoot ? "Root (/)" : (string.IsNullOrEmpty(rootDir.Name) ? rootDir.FullName : rootDir.Name),
                 FullPath = rootDir.FullName,
                 IsDirectory = true,
                 LastModified = rootDir.LastWriteTime
@@ -50,7 +51,7 @@ public sealed class DirectoryScanner
             void ReportProgress(string currentPath)
             {
                 var now = stopwatch.ElapsedMilliseconds;
-                if (now - lastReportTime >= 80) // ~12 fps progress update to prevent UI thrashing
+                if (now - lastReportTime >= 80) // ~12 fps progress update to prevent UI lag
                 {
                     lastReportTime = now;
                     progress?.Report(new ScanProgress(
@@ -62,7 +63,7 @@ public sealed class DirectoryScanner
                 }
             }
 
-            // Recursive scan
+            // Recursive scan from root
             ScanDirectoryInternal(rootDir, rootNode, extCounts, ref totalFiles, ref totalDirs, ref totalBytes, ReportProgress, cancellationToken);
 
             // Compute percentages and sort children recursively
@@ -97,6 +98,30 @@ public sealed class DirectoryScanner
         }, cancellationToken);
     }
 
+    private static bool ShouldSkip(DirectoryInfo dir)
+    {
+        var path = dir.FullName.TrimEnd('/', '\\');
+        if (string.IsNullOrEmpty(path)) return false; // Never skip root "/"
+
+        // Avoid cyclic directory symlinks
+        if (dir.Attributes.HasFlag(FileAttributes.ReparsePoint) || dir.LinkTarget != null)
+            return true;
+
+        if (SkipDirectories.Contains(path))
+            return true;
+
+        if (path.StartsWith("/proc", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/sys", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/dev", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/run", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/var/run", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private static void ScanDirectoryInternal(
         DirectoryInfo dir,
         FileSystemNode dirNode,
@@ -109,14 +134,7 @@ public sealed class DirectoryScanner
     {
         ct.ThrowIfCancellationRequested();
 
-        // Check for Linux virtual file systems to avoid endless scans or hangs
-        if (SkipDirectories.Contains(dir.FullName))
-        {
-            return;
-        }
-
-        // Avoid re-traversing directory symlinks/junctions
-        if (dir.Attributes.HasFlag(FileAttributes.ReparsePoint))
+        if (ShouldSkip(dir))
         {
             return;
         }
@@ -128,7 +146,9 @@ public sealed class DirectoryScanner
         int currentFileCount = 0;
         int currentDirCount = 0;
 
-        // 1. Enumerate files
+        var fileChildren = new List<FileSystemNode>();
+
+        // 1. Enumerate files in current directory
         try
         {
             foreach (var fi in dir.EnumerateFiles())
@@ -136,6 +156,12 @@ public sealed class DirectoryScanner
                 ct.ThrowIfCancellationRequested();
                 try
                 {
+                    // Skip dangling symlinks
+                    if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint) || fi.LinkTarget != null)
+                    {
+                        continue;
+                    }
+
                     var len = fi.Length;
                     var ext = fi.Extension.ToLowerInvariant();
                     var (cat, color) = FileSystemNode.Categorize(ext);
@@ -153,7 +179,7 @@ public sealed class DirectoryScanner
                         Parent = dirNode
                     };
 
-                    dirNode.Children.Add(fileNode);
+                    fileChildren.Add(fileNode);
                     currentDirSize += len;
                     currentFileCount++;
 
@@ -173,6 +199,42 @@ public sealed class DirectoryScanner
         catch (SecurityException) { }
         catch (IOException) { }
 
+        // Keep direct file children optimized for large filesystems (e.g. 1.5M files)
+        const int maxFilesKeptPerFolder = 200;
+        if (fileChildren.Count > maxFilesKeptPerFolder)
+        {
+            var sortedFiles = fileChildren.OrderByDescending(f => f.Size).ToList();
+            var keptFiles = sortedFiles.Take(maxFilesKeptPerFolder).ToList();
+            var remainingSize = sortedFiles.Skip(maxFilesKeptPerFolder).Sum(f => f.Size);
+            var remainingCount = sortedFiles.Count - maxFilesKeptPerFolder;
+
+            foreach (var f in keptFiles)
+            {
+                dirNode.Children.Add(f);
+            }
+
+            if (remainingCount > 0)
+            {
+                dirNode.Children.Add(new FileSystemNode
+                {
+                    Name = $"... {remainingCount:N0} other smaller files",
+                    FullPath = Path.Combine(dir.FullName, "(other smaller files)"),
+                    IsDirectory = false,
+                    Size = remainingSize,
+                    Category = "Other",
+                    ColorHex = "#556575",
+                    Parent = dirNode
+                });
+            }
+        }
+        else
+        {
+            foreach (var f in fileChildren)
+            {
+                dirNode.Children.Add(f);
+            }
+        }
+
         // 2. Enumerate subdirectories
         try
         {
@@ -181,9 +243,7 @@ public sealed class DirectoryScanner
                 ct.ThrowIfCancellationRequested();
                 try
                 {
-                    // Skip hidden symlinks / virtual FS mounts
-                    if (subDir.Attributes.HasFlag(FileAttributes.ReparsePoint) ||
-                        SkipDirectories.Contains(subDir.FullName))
+                    if (ShouldSkip(subDir))
                     {
                         continue;
                     }

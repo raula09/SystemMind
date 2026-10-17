@@ -2,13 +2,8 @@ namespace SystemMind.Services;
 
 public static class EnvLoader
 {
-    private static bool _loaded;
-
     public static void Load(string? directory = null)
     {
-        if (_loaded) return;
-        _loaded = true;
-
         try
         {
             var dir = directory ?? Directory.GetCurrentDirectory();
@@ -26,7 +21,7 @@ public static class EnvLoader
                 if (File.Exists(envPath))
                 {
                     LoadFromFile(envPath);
-                    break;
+                    return;
                 }
             }
         }
@@ -50,7 +45,7 @@ public static class EnvLoader
             {
                 var key = parts[0].Trim();
                 var val = parts[1].Trim().Trim('"', '\'');
-                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+                if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(val))
                 {
                     Environment.SetEnvironmentVariable(key, val);
                 }
