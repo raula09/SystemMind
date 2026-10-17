@@ -17,6 +17,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _prompt = "";
     private string _activeView = "Overview";
     private string _statusBanner = "";
+    private string _selectedDashboardCard = "";
     private bool _isAiThinking;
     private readonly DispatcherTimer _resourceTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private string _gpuText = "GPU: unavailable";
@@ -27,7 +28,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public StorageExplorerViewModel StorageExplorer { get; }
     public CleanupViewModel Cleanup { get; }
     public PerformanceViewModel Performance { get; }
-    public SettingsViewModel Settings { get; }
     public AnomalyViewModel Anomalies { get; }
 
     public ObservableCollection<Recommendation> Recommendations { get; } = [];
@@ -45,6 +45,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand SetViewCommand { get; }
     public ICommand ClearChatCommand { get; }
     public ICommand CycleResourceMetricCommand { get; }
+    public ICommand ShowDashboardDetailCommand { get; }
 
     public string ActiveView
     {
@@ -59,7 +60,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 OnChanged(nameof(IsStorageExplorerActive));
                 OnChanged(nameof(IsCleanupActive));
                 OnChanged(nameof(IsPerformanceActive));
-                OnChanged(nameof(IsSettingsActive));
                 OnChanged(nameof(IsAnomaliesActive));
                 OnChanged(nameof(IsLiveResourcesActive));
                 OnChanged(nameof(IsCompatibilityActive));
@@ -71,13 +71,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsStorageExplorerActive => ActiveView == "StorageExplorer";
     public bool IsCleanupActive => ActiveView == "Cleanup";
     public bool IsPerformanceActive => ActiveView == "Performance";
-    public bool IsSettingsActive => ActiveView == "Settings";
     public bool IsAnomaliesActive => ActiveView == "Anomalies";
     public bool IsLiveResourcesActive => ActiveView == "LiveResources";
     public bool IsCompatibilityActive => ActiveView == "Compatibility";
 
     public string Greeting => DateTime.Now.Hour < 12 ? "morning" : DateTime.Now.Hour < 18 ? "afternoon" : "evening";
-    public string Prompt { get => _prompt; set { _prompt = value; OnChanged(); } }
+    public string Prompt
+    {
+        get => _prompt;
+        set
+        {
+            if (_prompt == value) return;
+            _prompt = value;
+            OnChanged();
+            OnChanged(nameof(HasPrompt));
+        }
+    }
+
+    public bool HasPrompt => !string.IsNullOrWhiteSpace(Prompt);
 
     public bool IsAiThinking
     {
@@ -93,6 +104,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public bool HasStatusBanner => !string.IsNullOrEmpty(StatusBanner);
     public bool HasMessages => Messages.Count > 0;
+    public bool HasDashboardDetail => !string.IsNullOrEmpty(_selectedDashboardCard);
+    public string DashboardDetailTitle => $"{_selectedDashboardCard} details";
+    public string DashboardDetail => _selectedDashboardCard switch
+    {
+        "Insights" => "These recommendations are based on the latest CPU, memory, and storage sample. Select Refresh to collect a new sample.",
+        "CPU" => $"Current processor utilisation is {CpuHeadline}. {CpuDetail}. The chart shows the most recent samples, updated every two seconds.",
+        "Memory" => $"{MemoryHeadline} is allocated ({MemoryDetail}). High memory pressure can cause slower app switching and disk paging.",
+        "Network" => $"Current traffic is {NetworkDownText} received and {NetworkUpText} sent. Total traffic since monitoring began: {NetworkTotalInText} in and {NetworkTotalOutText} out.",
+        "Disk" => $"Storage is {StoragePercent:F1}% used. {StorageDetail}. The drive list above breaks down usage by mounted filesystem.",
+        "Thermal" => $"CPU temperature is {ThermalCpuText}; the highest recorded sensor is {ThermalMaxText}. Sustained high temperatures can reduce performance.",
+        "Battery" => $"Battery level is {BatteryText}. Status: {BatteryStatusText}. Reported health: {BatteryHealthText}.",
+        "GPU" => $"{GpuNameText}. {GpuMemoryText}. Current GPU state: {GpuText}.",
+        _ => "Select a dashboard card to see more detail."
+    };
 
     public string MemoryHeadline => $"{_snapshot?.MemoryUsedGb:F1} / {_snapshot?.MemoryTotalGb:F1} GB";
     public string MemoryDetail => $"{MemoryPercent:F0}% in use";
@@ -153,7 +178,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StorageExplorer = new StorageExplorerViewModel();
         Cleanup = new CleanupViewModel();
         Performance = new PerformanceViewModel();
-        Settings = new SettingsViewModel();
         Anomalies = new AnomalyViewModel(ExplainAnomalyAsync);
         Messages.CollectionChanged += (_, _) => OnChanged(nameof(HasMessages));
         // Wire sub-view model events to AI and notifications
@@ -164,10 +188,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Cleanup.NotifyUser += msg => ShowBanner(msg);
 
         Performance.NotifyUser += msg => ShowBanner(msg);
-        Settings.NotifyUser += msg => ShowBanner(msg);
 
         RefreshCommand = new RelayCommand(Refresh);
         CycleResourceMetricCommand = new RelayCommand(CycleResourceMetric);
+        ShowDashboardDetailCommand = new RelayCommand(card =>
+        {
+            _selectedDashboardCard = card?.ToString() ?? "";
+            OnChanged(nameof(HasDashboardDetail));
+            OnChanged(nameof(DashboardDetailTitle));
+            OnChanged(nameof(DashboardDetail));
+        });
         SendCommand = new AsyncCommand(_ => SendAsync());
         QuickAskCommand = new AsyncCommand(p => AskAsync(p?.ToString() ?? ""));
         SetViewCommand = new RelayCommand(p => { if (p is string view) ActiveView = view; });
@@ -429,7 +459,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _ = StorageExplorer.StartScanAsync();
         }
 
-        Messages.Add(new ChatMessage("You", question, "#183E50", HorizontalAlignment.Right));
+        Messages.Add(new ChatMessage("You", question, "#153441", HorizontalAlignment.Right));
         IsAiThinking = true;
 
         try
@@ -444,7 +474,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 StorageExplorer.TotalFilesScanned,
                 StorageExplorer.TotalBytesScanned);
 
-            var aiMessage = new ChatMessage("SystemMind", answer, "#132C3B", HorizontalAlignment.Left, animate: true);
+            var aiMessage = new ChatMessage("SystemMind", answer, "#101B22", HorizontalAlignment.Left, animate: true);
             Messages.Add(aiMessage);
             _ = aiMessage.AnimateAsync();
         }

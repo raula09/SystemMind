@@ -16,6 +16,9 @@ public sealed class AssistantSphere : Control
     public static readonly StyledProperty<bool> IsActiveProperty =
         AvaloniaProperty.Register<AssistantSphere, bool>(nameof(IsActive));
 
+    public static readonly StyledProperty<bool> IsEngagedProperty =
+        AvaloniaProperty.Register<AssistantSphere, bool>(nameof(IsEngaged));
+
     public static readonly StyledProperty<Color> AccentProperty =
         AvaloniaProperty.Register<AssistantSphere, Color>(nameof(Accent), Color.Parse("#4CC2FF"));
 
@@ -23,6 +26,13 @@ public sealed class AssistantSphere : Control
     {
         get => GetValue(IsActiveProperty);
         set => SetValue(IsActiveProperty, value);
+    }
+
+    /// <summary>Gives the idle sphere a responsive pulse while the user is composing a prompt.</summary>
+    public bool IsEngaged
+    {
+        get => GetValue(IsEngagedProperty);
+        set => SetValue(IsEngagedProperty, value);
     }
 
     public Color Accent
@@ -47,7 +57,7 @@ public sealed class AssistantSphere : Control
 
     static AssistantSphere()
     {
-        AffectsRender<AssistantSphere>(IsActiveProperty, AccentProperty);
+        AffectsRender<AssistantSphere>(IsActiveProperty, IsEngagedProperty, AccentProperty);
     }
 
     public AssistantSphere()
@@ -90,7 +100,7 @@ public sealed class AssistantSphere : Control
         _last = now;
         _time += dt;
 
-        double target = IsActive ? 1.0 : 0.0;
+        double target = IsActive ? 1.0 : IsEngaged ? 0.38 : 0.0;
         _energy += (target - _energy) * Math.Min(1.0, dt * 3.5);
         InvalidateVisual();
     }

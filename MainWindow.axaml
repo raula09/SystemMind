@@ -5,12 +5,13 @@
         xmlns:controls="using:SystemMind.Controls"
         x:Class="SystemMind.MainWindow"
         x:DataType="vm:MainViewModel"
-        Width="1480" Height="920" MinWidth="1100" MinHeight="750"
+        Width="1480" Height="920" MinWidth="1240" MinHeight="750"
         Background="#14171B"
         Foreground="#E6E8EB"
         FontFamily="avares://Avalonia.Fonts.Inter/Assets#Inter"
         FontSize="12"
-        Title="SystemMind">
+        Title="SystemMind"
+        Icon="avares://SystemMind/images/Logo.png">
 
   <Window.Styles>
     <!--
@@ -57,13 +58,42 @@
       <Setter Property="CornerRadius" Value="12"/>
       <Setter Property="Padding" Value="16"/>
     </Style>
-    <!-- Fixed card dimensions let the dashboard wrap cleanly at any window width. -->
+    <!-- Dashboard cards fill their grid cell, so every row is the same size at any window width. -->
     <Style Selector="Border.dashboard-card">
-      <Setter Property="Width" Value="430"/>
-      <Setter Property="Height" Value="360"/>
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="MinHeight" Value="250"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="Margin" Value="0,0,14,14"/>
       <Setter Property="ClipToBounds" Value="True"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Border.dashboard-card:pointerover">
+      <Setter Property="Background" Value="#111C22"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
+    <Style Selector="Border.dashboard-insights">
+      <Setter Property="BorderBrush" Value="#FFB23F"/>
+      <Setter Property="BorderThickness" Value="3,1,1,1"/>
+      <Setter Property="MinHeight" Value="0"/>
+    </Style>
+    <Style Selector="Border.metric-card">
+      <Setter Property="MinHeight" Value="210"/>
+    </Style>
+    <Style Selector="Border.dashboard-bottom-card">
+      <Setter Property="MinHeight" Value="190"/>
+    </Style>
+    <Style Selector="Border.dashboard-card TextBlock.cardtitle">
+      <Setter Property="Foreground" Value="#DCE7EC"/>
+      <Setter Property="LetterSpacing" Value="0.8"/>
+    </Style>
+    <Style Selector="Button.dashboard-action">
+      <Setter Property="Background" Value="#00AEEF"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+      <Setter Property="Foreground" Value="#041014"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="14,8"/>
     </Style>
     <Style Selector="Border.inset">
       <Setter Property="Background" Value="#171A1E"/>
@@ -143,35 +173,36 @@
       <Setter Property="BorderBrush" Value="#3A6BA8"/>
     </Style>
 
-    <!-- Sidebar navigation (macOS source-list look) -->
+    <!-- Sidebar navigation: photo-inspired ink, slate, and cyan palette. -->
     <Style Selector="Button.nav">
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Foreground" Value="#B4BBC3"/>
-      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Foreground" Value="#A9B7C2"/>
+      <Setter Property="CornerRadius" Value="0"/>
       <Setter Property="Padding" Value="10,6"/>
       <Setter Property="FontSize" Value="12"/>
     </Style>
     <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#22262C"/>
+      <Setter Property="Background" Value="#111A20"/>
       <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     <Style Selector="Button.nav-active">
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
-      <Setter Property="Background" Value="#2D3239"/>
-      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="#121A20"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+      <Setter Property="BorderThickness" Value="2,0,0,0"/>
       <Setter Property="Foreground" Value="#FFFFFF"/>
       <Setter Property="FontWeight" Value="Medium"/>
-      <Setter Property="CornerRadius" Value="7"/>
-      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="8,6"/>
       <Setter Property="FontSize" Value="12"/>
     </Style>
     <Style Selector="Button.nav-active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#2D3239"/>
-      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="Background" Value="#121A20"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
     </Style>
 
     <Style Selector="Button.iconbtn">
@@ -179,6 +210,13 @@
       <Setter Property="BorderBrush" Value="#2E333A"/>
       <Setter Property="Padding" Value="8,5"/>
       <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Button.send-icon">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Background" Value="#00AEEF"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
     </Style>
 
     <Style Selector="ToggleButton">
@@ -218,6 +256,25 @@
       <Setter Property="Background" Value="#171A1E"/>
       <Setter Property="BorderBrush" Value="#4D96F0"/>
     </Style>
+    <Style Selector="Border.chat-rail TextBox">
+      <Setter Property="Background" Value="#0A1014"/>
+      <Setter Property="BorderBrush" Value="#263842"/>
+      <Setter Property="Foreground" Value="#E3EEF3"/>
+    </Style>
+    <Style Selector="Border.chat-rail TextBox:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="#0A1014"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
+    <Style Selector="Border.chat-rail Button.chip">
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="2"/>
+      <Setter Property="Foreground" Value="#A9B7C2"/>
+      <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    <Style Selector="Border.chat-rail Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
 
     <Style Selector="CheckBox"><Setter Property="Foreground" Value="#DADEE3"/></Style>
 
@@ -245,17 +302,17 @@
     <Style Selector="ScrollViewer"><Setter Property="AllowAutoHide" Value="True"/></Style>
   </Window.Styles>
 
-  <!-- ROOT: sidebar | workspace (content + assistant dock) -->
-  <Grid ColumnDefinitions="188,*">
+  <!-- ROOT: navigation | workspace | assistant rail -->
+  <Grid ColumnDefinitions="232,*,420">
 
     <!-- ===================== SIDEBAR ===================== -->
-    <Border Background="#1A1D22" BorderBrush="#262A30" BorderThickness="0,0,1,0" Padding="10,14,10,12">
+    <Border Classes="sidebar-shell" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="0,0,1,0" Padding="10,14,10,12">
       <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Brand -->
         <StackPanel Orientation="Horizontal" Spacing="9" Margin="8,2,0,20">
-          <Border Width="22" Height="22" CornerRadius="6" Background="#1F2B3A" BorderBrush="#3A6BA8" BorderThickness="1">
-            <Ellipse Width="7" Height="7" Fill="#4D96F0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <Border Width="28" Height="22" CornerRadius="5" ClipToBounds="True" Background="#0D2430">
+            <Image Source="avares://SystemMind/images/Logo.png" Stretch="Uniform"/>
           </Border>
           <TextBlock Text="SystemMind" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
         </StackPanel>
@@ -268,7 +325,7 @@
                   Command="{Binding SetViewCommand}" CommandParameter="Overview">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="#4D96F0" Data="M2,2 H6.5 V6.5 H2 Z M8.5,2 H13 V6.5 H8.5 Z M2,8.5 H6.5 V13 H2 Z M8.5,8.5 H13 V13 H8.5 Z"/>
+                    Stroke="#00AEEF" Data="M2,2 H6.5 V6.5 H2 Z M8.5,2 H13 V6.5 H8.5 Z M2,8.5 H6.5 V13 H2 Z M8.5,8.5 H13 V13 H8.5 Z"/>
               <TextBlock Text="Dashboard" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
           </Button>
@@ -311,21 +368,13 @@
             </StackPanel>
           </Button>
 
-          <Button Classes.nav-active="{Binding IsSettingsActive}" Classes.nav="{Binding !IsSettingsActive}"
-                  Command="{Binding SetViewCommand}" CommandParameter="Settings">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="#8A929C" Data="M2,4.5 H13 M2,10.5 H13 M9.5,2.8 V6.2 M5.5,8.8 V12.2"/>
-              <TextBlock Text="Settings" Foreground="{Binding $parent[Button].Foreground}"/>
-            </StackPanel>
-          </Button>
         </StackPanel>
 
       </Grid>
     </Border>
 
     <!-- ===================== WORKSPACE ===================== -->
-    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+    <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
       <!-- Status banner -->
       <Border IsVisible="{Binding HasStatusBanner}" Background="#1A2634" BorderBrush="#3A6BA8" BorderThickness="1"
@@ -340,30 +389,41 @@
       <Grid Grid.Row="1">
 
         <!-- ============ VIEW: DASHBOARD ============ -->
-        <ScrollViewer IsVisible="{Binding IsOverviewActive}" Padding="20,14,20,16"
-                      HorizontalScrollBarVisibility="Auto">
+        <ScrollViewer Classes="overview" IsVisible="{Binding IsOverviewActive}" Padding="28,24,28,20"
+                      Background="#080C0F" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Spacing="12">
 
             <!-- Header -->
-            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
-              <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <TextBlock Text="Dashboard" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+              <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <TextBlock Text="SYSTEM OVERVIEW" Classes="eyebrow" FontSize="10.5"/>
+                <TextBlock Text="·" Classes="dim"/>
                 <TextBlock Text="{Binding CpuDetail}" Classes="dim num" FontSize="10.5" VerticalAlignment="Center"/>
+                <Ellipse Width="5" Height="5" Fill="#45D6A1" VerticalAlignment="Center"/>
+                <TextBlock Text="LIVE" Foreground="#45D6A1" FontSize="10" FontWeight="SemiBold" LetterSpacing="1"/>
               </StackPanel>
-              <Button Grid.Column="1" Classes="iconbtn" Content="Refresh" Command="{Binding RefreshCommand}"/>
+              <Button Grid.Column="1" Classes="dashboard-action" Content="Refresh ↗" Command="{Binding RefreshCommand}"/>
             </Grid>
 
-            <!-- Equal-size cards wrap from four columns down to one as space narrows. -->
-            <WrapPanel>
+            <!-- Full-width health summary, followed by compact metric rows. -->
+            <StackPanel Spacing="14">
 
               <!-- INSIGHTS -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+              <Border Classes="panel dashboard-card dashboard-insights" Tag="Insights" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="8">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#F5C84C" VerticalAlignment="Center"
-                          Data="M7,1 C4.2,1 2.2,3 2.2,5.6 C2.2,7.3 3,8.4 3.9,9.3 C4.4,9.8 4.6,10.3 4.6,11 H9.4 C9.4,10.3 9.6,9.8 10.1,9.3 C11,8.4 11.8,7.3 11.8,5.6 C11.8,3 9.8,1 7,1 Z M5,12.2 H9 V13.2 H5 Z"/>
-                    <TextBlock Text="Insights" Classes="cardtitle"/>
-                  </StackPanel>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Path Width="14" Height="14" Stretch="Uniform" Fill="#F5C84C" VerticalAlignment="Center"
+                            Data="M7,1 C4.2,1 2.2,3 2.2,5.6 C2.2,7.3 3,8.4 3.9,9.3 C4.4,9.8 4.6,10.3 4.6,11 H9.4 C9.4,10.3 9.6,9.8 10.1,9.3 C11,8.4 11.8,7.3 11.8,5.6 C11.8,3 9.8,1 7,1 Z M5,12.2 H9 V13.2 H5 Z"/>
+                      <TextBlock Text="Insights" Classes="cardtitle"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="#2A2410" BorderBrush="#5C4A14" BorderThickness="1" CornerRadius="9" Padding="7,1">
+                      <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{Binding Recommendations.Count}" Classes="num" FontSize="10.5" Foreground="#F5C84C" FontWeight="SemiBold"/>
+                        <TextBlock Text="items" FontSize="10.5" Foreground="#F5C84C"/>
+                      </StackPanel>
+                    </Border>
+                  </Grid>
                   <ItemsControl ItemsSource="{Binding Recommendations}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
@@ -385,142 +445,124 @@
                 </StackPanel>
               </Border>
 
+              <UniformGrid Columns="4">
+
               <!-- CPU -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+              <Border Classes="panel dashboard-card metric-card" Tag="CPU" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#4D96F0" VerticalAlignment="Center"/>
-                    <TextBlock Text="CPU" Classes="cardtitle"/>
-                  </StackPanel>
-                  <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="104" Height="104" Stroke="#4D96F0" ValueText="{Binding CpuHeadline}" Caption="CPU"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
-                      <TextBlock Text="UTILISATION" Classes="eyebrow"/>
-                      <TextBlock Text="{Binding CpuHeadline}" Classes="big" Foreground="#4D96F0"/>
-                      <TextBlock Text="{Binding CpuDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#00AEEF" VerticalAlignment="Center"/>
+                      <TextBlock Text="CPU" Classes="cardtitle"/>
                     </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
                   </Grid>
-                  <controls:TelemetryChartControl Values="{Binding CpuHistory}" Stroke="#4D96F0" Height="74"/>
-                  <TextBlock Text="Sampled every 2 seconds" Classes="dim" FontSize="10"/>
+                  <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#00AEEF" ValueText="{Binding CpuHeadline}" Caption="CPU"
+                                      HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding CpuDetail}" Classes="dim num" FontSize="10" HorizontalAlignment="Center"/>
+                  <controls:TelemetryChartControl Values="{Binding CpuHistory}" Stroke="#00AEEF" Height="32"/>
                 </StackPanel>
               </Border>
 
               <!-- MEMORY -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+              <Border Classes="panel dashboard-card metric-card" Tag="Memory" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#F2994A" VerticalAlignment="Center"/>
-                    <TextBlock Text="Memory" Classes="cardtitle"/>
-                  </StackPanel>
-                  <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="104" Height="104" Stroke="#F2994A" Value="{Binding MemoryPercent}"
-                                        ValueText="{Binding MemoryPercent, StringFormat='{}{0:F1}%'}" Caption="RAM"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
-                      <TextBlock Text="IN USE" Classes="eyebrow"/>
-                      <TextBlock Text="{Binding MemoryHeadline}" FontSize="15" FontWeight="SemiBold"/>
-                      <TextBlock Text="{Binding MemoryDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#00AEEF" VerticalAlignment="Center"/>
+                      <TextBlock Text="Memory" Classes="cardtitle"/>
                     </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
                   </Grid>
-                  <controls:TelemetryChartControl Values="{Binding MemoryHistory}" Stroke="#F2994A" Height="74"/>
+                  <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#00AEEF" Value="{Binding MemoryPercent}"
+                                      ValueText="{Binding MemoryPercent, StringFormat='{}{0:F1}%'}" Caption="RAM"
+                                      HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding MemoryHeadline}" Classes="num" FontSize="10.5" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding MemoryDetail}" Classes="dim" FontSize="10" HorizontalAlignment="Center"/>
+                  <controls:TelemetryChartControl Values="{Binding MemoryHistory}" Stroke="#00AEEF" Height="26"/>
                 </StackPanel>
               </Border>
 
-              <!-- NETWORK (optional data: needs the view-model properties listed in the notes) -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+              <!-- GPU -->
+              <Border Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="GPU" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Ellipse Width="14" Height="14" Fill="#B65CF0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Network" Classes="cardtitle"/>
-                  </StackPanel>
-                  <StackPanel Spacing="9">
-                    <StackPanel Orientation="Horizontal" Spacing="9">
-                      <Ellipse Width="8" Height="8" Fill="#3FCF6B" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding NetworkDownText, FallbackValue='—'}" Classes="num" FontSize="12" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="9">
-                      <Ellipse Width="8" Height="8" Fill="#4D96F0" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding NetworkUpText, FallbackValue='—'}" Classes="num" FontSize="12" FontWeight="SemiBold"/>
-                    </StackPanel>
-                  </StackPanel>
-                  <Border Height="1" Background="#2A2F36"/>
                   <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Total In" Classes="muted" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalInText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#FF5964" VerticalAlignment="Center"/>
+                      <TextBlock Text="GPU" Classes="cardtitle"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
                   </Grid>
-                  <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Total Out" Classes="muted" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalOutText, FallbackValue='—'}" Classes="num" FontSize="11"/>
-                  </Grid>
+                  <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#FF5964"
+                                      ValueText="{Binding GpuText, FallbackValue='—'}" Caption="GPU" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding GpuNameText, FallbackValue='—'}" Classes="num" FontSize="10" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Text="{Binding GpuMemoryText, FallbackValue='—'}" Classes="dim num" FontSize="10" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
-            </WrapPanel>
 
-            <WrapPanel>
+              <!-- THERMAL -->
+              <Border Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="Thermal" PointerPressed="DashboardCard_OnPointerPressed">
+                <StackPanel Spacing="12">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#FFB23F" VerticalAlignment="Center"/>
+                      <TextBlock Text="Thermal" Classes="cardtitle"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
+                  </Grid>
+                  <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#FFB23F"
+                                      ValueText="{Binding ThermalText, FallbackValue='—'}" Caption="Temp" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding ThermalCpuText, FallbackValue='—'}" Classes="num" FontSize="10.5" HorizontalAlignment="Center"/>
+                  <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                    <TextBlock Text="CPU temperature · max" Classes="dim" FontSize="10"/>
+                    <TextBlock Text="{Binding ThermalMaxText, FallbackValue='—'}" Classes="dim num" FontSize="10"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              </UniformGrid>
+              <UniformGrid Columns="3">
 
               <!-- DISK -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top">
+              <Border Classes="panel dashboard-card dashboard-bottom-card" Tag="Disk" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#3FCF6B" VerticalAlignment="Center"/>
-                    <TextBlock Text="Disk" Classes="cardtitle"/>
-                  </StackPanel>
-                  <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#3FCF6B" Value="{Binding StoragePercent}"
-                                        ValueText="{Binding StoragePercent, StringFormat='{}{0:F1}%'}" Caption="Disk"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="4">
-                      <TextBlock Text="{Binding StorageHeadline}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                      <TextBlock Text="{Binding StorageDetail}" Classes="muted num" FontSize="10.5" TextWrapping="Wrap"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#45D6A1" VerticalAlignment="Center"/>
+                      <TextBlock Text="Disk" Classes="cardtitle"/>
                     </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding DiskItems.Count, StringFormat='{}{0} volumes ›'}" Classes="dim" FontSize="10.5"/>
                   </Grid>
-                  <ItemsControl ItemsSource="{Binding DiskItems}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate>
-                        <StackPanel Margin="0,4,0,0" Spacing="4">
-                          <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="{Binding Name}" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="#3FCF6B" Classes="num" FontSize="10.5"/>
-                          </Grid>
-                          <ProgressBar Value="{Binding Percent}" Maximum="100" Height="3" Foreground="#3FCF6B"/>
-                        </StackPanel>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </StackPanel>
-              </Border>
-
-              <!-- THERMAL (optional data) -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
-                <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#F2994A" VerticalAlignment="Center"/>
-                    <TextBlock Text="Thermal" Classes="cardtitle"/>
-                  </StackPanel>
                   <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#F2994A"
-                                        ValueText="{Binding ThermalText, FallbackValue='—'}" Caption="Temp"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="8">
-                      <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="CPU" Classes="muted" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ThermalCpuText, FallbackValue='—'}" Classes="num" FontSize="11"/>
-                      </Grid>
-                      <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="Max" Classes="muted" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ThermalMaxText, FallbackValue='—'}" Classes="num" FontSize="11"/>
-                      </Grid>
+                    <controls:RingGauge Width="106" Height="106" Thickness="9" Stroke="#45D6A1" Value="{Binding StoragePercent}"
+                                        ValueText="{Binding StoragePercent, StringFormat='{}{0:F1}%'}" Caption="Disk"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="5">
+                      <TextBlock Text="{Binding StorageHeadline}" Classes="num" FontSize="11"/>
+                      <TextBlock Text="{Binding StorageDetail}" Classes="muted num" FontSize="10.5"/>
+                      <ItemsControl ItemsSource="{Binding DiskItems}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <TextBlock Text="{Binding Name}" Classes="dim" FontSize="9.5"/>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
                     </StackPanel>
                   </Grid>
                 </StackPanel>
               </Border>
 
               <!-- BATTERY (optional data) -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+              <Border Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Battery" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#3FCF6B" VerticalAlignment="Center"/>
-                    <TextBlock Text="Battery" Classes="cardtitle"/>
-                  </StackPanel>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Width="14" Height="14" CornerRadius="3" Background="#FFB23F" VerticalAlignment="Center"/>
+                      <TextBlock Text="Battery" Classes="cardtitle"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
+                  </Grid>
                   <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="92" Height="92" Thickness="8" Stroke="#3FCF6B"
+                    <controls:RingGauge Width="116" Height="116" Thickness="10" Stroke="#FFB23F"
                                         ValueText="{Binding BatteryText, FallbackValue='—'}" Caption="Battery"/>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="8">
                       <Grid ColumnDefinitions="*,Auto">
@@ -536,24 +578,36 @@
                 </StackPanel>
               </Border>
 
-              <!-- GPU (optional data) -->
-              <Border Classes="panel dashboard-card" VerticalAlignment="Top" x:CompileBindings="False">
+              <!-- NETWORK -->
+              <Border Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Network" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border Width="14" Height="14" CornerRadius="3" Background="#4D96F0" VerticalAlignment="Center"/>
-                    <TextBlock Text="GPU" Classes="cardtitle"/>
-                  </StackPanel>
-                  <Grid ColumnDefinitions="Auto,*">
-                    <controls:RingGauge Width="80" Height="80" Thickness="7" Stroke="#F2994A"
-                                        ValueText="{Binding GpuText, FallbackValue='—'}" Caption="GPU"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="6">
-                      <TextBlock Text="{Binding GpuNameText, FallbackValue='—'}" Classes="num" FontSize="10.5" TextWrapping="Wrap"/>
-                      <TextBlock Text="{Binding GpuMemoryText, FallbackValue='—'}" Classes="muted num" FontSize="10.5"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Ellipse Width="14" Height="14" Fill="#00AEEF" VerticalAlignment="Center"/>
+                      <TextBlock Text="Network" Classes="cardtitle"/>
                     </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
                   </Grid>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                      <TextBlock Text="↓ Download" Foreground="#45D6A1" Classes="num" FontSize="10.5"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkDownText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="↑ Upload" Foreground="#00AEEF" Classes="num" FontSize="10.5"/>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkUpText, FallbackValue='—'}" Classes="num" FontSize="11"/>
+                  </Grid>
+                  <Border Height="1" Background="#25313A"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Total in / out" Classes="muted" FontSize="10.5"/>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalInText, FallbackValue='—'}" Classes="num" FontSize="10.5"/>
+                  </Grid>
+                  <TextBlock Text="{Binding NetworkTotalOutText, FallbackValue='—'}" Classes="dim num" FontSize="10" HorizontalAlignment="Right"/>
                 </StackPanel>
               </Border>
-            </WrapPanel>
+              </UniformGrid>
+            </StackPanel>
 
           </StackPanel>
         </ScrollViewer>
@@ -938,126 +992,150 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ============ VIEW: SETTINGS ============ -->
-        <ScrollViewer IsVisible="{Binding IsSettingsActive}" Padding="28,22">
-          <StackPanel Spacing="16" MaxWidth="720" HorizontalAlignment="Left">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Settings" Classes="h1"/>
-              <TextBlock Text="OpenRouter configuration and deletion protections." Classes="muted" FontSize="12"/>
-            </StackPanel>
-
-            <Border Classes="panel" Padding="20">
-              <StackPanel Spacing="18">
-                <TextBlock Text="OpenRouter" Classes="cardtitle"/>
-
-                <StackPanel Spacing="6">
-                  <TextBlock Text="OpenRouter API key" FontSize="12" FontWeight="Medium"/>
-                  <TextBox Text="{Binding Settings.OpenRouterKey}" PasswordChar="•" Watermark="sk-or-v1-…"/>
-                  <TextBlock Text="SystemMind only sends cloud requests through OpenRouter." Classes="muted" FontSize="11"/>
-                </StackPanel>
-
-                <StackPanel Spacing="6">
-                  <TextBlock Text="Model" FontSize="12" FontWeight="Medium"/>
-                  <TextBox Text="{Binding Settings.SelectedModel}" Watermark="meta-llama/llama-3.3-70b:free" FontFamily="Cascadia Mono, JetBrains Mono, Menlo, Consolas, monospace"/>
-                </StackPanel>
-              </StackPanel>
-            </Border>
-
-            <Border Classes="panel" Padding="20">
-              <StackPanel Spacing="12">
-                <TextBlock Text="Safety" Classes="cardtitle"/>
-                <CheckBox IsChecked="{Binding Settings.SafeMode}" Content="Protect critical system directories (/, /usr, /bin, /etc, /boot)" IsEnabled="False"/>
-                <TextBlock Text="Safe mode blocks deletion of essential operating-system and root directories." Classes="muted" FontSize="11"/>
-              </StackPanel>
-            </Border>
-
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <Button Content="Save settings" Classes="primary" Padding="18,8" Command="{Binding Settings.SaveCommand}"/>
-              <Button Content="Reload from .env" Padding="14,8" Command="{Binding Settings.ReloadCommand}"/>
-              <TextBlock Text="{Binding Settings.StatusMessage}" Classes="muted" VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
-            </StackPanel>
-          </StackPanel>
-        </ScrollViewer>
       </Grid>
 
-      <!-- ===================== ASSISTANT DOCK ===================== -->
-      <Border Grid.Row="2" Background="#1A1D22" BorderBrush="#262A30" BorderThickness="0,1,0,0">
-        <Grid RowDefinitions="Auto,Auto">
+      <!-- ============ DASHBOARD DETAIL DRAWER (opens on card click) ============ -->
+      <Border x:Name="DetailDrawer" Grid.RowSpan="2" IsVisible="False"
+              x:CompileBindings="False"
+              HorizontalAlignment="Right" Width="400" Margin="0,14,14,14"
+              Background="#1A1F26" BorderBrush="#3A6BA8" BorderThickness="1" CornerRadius="14" Padding="0"
+              BoxShadow="0 8 32 0 #99000000">
+        <Grid RowDefinitions="Auto,*,Auto">
 
-          <!-- Sphere + prompt (glowing box) -->
-          <Grid Grid.Row="0" Margin="22,10,30,16">
-            <Border Background="#0B0D10" CornerRadius="14" BorderBrush="#1C2026" BorderThickness="1" Padding="4">
-              <Grid ColumnDefinitions="104,*,Auto">
-                <Grid Width="96" Height="96" VerticalAlignment="Center" Margin="4,0,0,0">
-                  <controls:AssistantSphere IsActive="{Binding IsAiThinking}" Accent="#4D96F0"/>
-                </Grid>
+          <!-- Header -->
+          <Border Padding="18,16,14,12" BorderBrush="#2A2F36" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Border x:Name="DetailSwatch" Width="12" Height="12" CornerRadius="3" Background="#4D96F0"
+                      VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock x:Name="DetailTitle" Text="Details" FontSize="15" FontWeight="SemiBold"/>
+                <TextBlock x:Name="DetailSubtitle" Text="" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+              </StackPanel>
+              <Button Grid.Column="2" Content="✕" Classes="sm" Click="DetailClose_OnClick" VerticalAlignment="Top"/>
+            </Grid>
+          </Border>
 
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
-                  <Grid ColumnDefinitions="Auto,*">
-                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
-                      <TextBlock Text="Assistant" Classes="cardtitle"/>
-                      <TextBlock Text="· ready" Classes="dim" FontSize="10.5" IsVisible="{Binding !IsAiThinking}"/>
-                      <TextBlock Text="· analysing…" Foreground="#4D96F0" FontSize="10.5" IsVisible="{Binding IsAiThinking}"/>
+          <!-- Body -->
+          <ScrollViewer Grid.Row="1" Padding="18,14">
+            <StackPanel Spacing="14">
+              <StackPanel Spacing="6">
+                <TextBlock Text="LIVE VALUES" Classes="eyebrow"/>
+                <ItemsControl x:Name="DetailRows">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border BorderBrush="#262B32" BorderThickness="0,0,0,1" Padding="0,7">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding Label}" Classes="muted" FontSize="11.5" TextWrapping="Wrap" MaxWidth="170"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="num" FontSize="11.5" FontWeight="SemiBold"
+                                     TextWrapping="Wrap" MaxWidth="190" TextAlignment="Right"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="WHAT THIS MEANS" Classes="eyebrow"/>
+                <TextBlock x:Name="DetailExplain" Classes="muted" FontSize="12" TextWrapping="Wrap" LineHeight="18"/>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+
+          <!-- Footer -->
+          <Border Grid.Row="2" Padding="14,12" BorderBrush="#2A2F36" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+              <Button Content="Close" Click="DetailClose_OnClick"/>
+              <Button Content="Ask assistant" Classes="primary" Click="DetailAsk_OnClick"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ===================== ASSISTANT RAIL ===================== -->
+    <Border Grid.Column="2" Classes="chat-rail" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="1,0,0,0">
+      <Grid RowDefinitions="*,Auto">
+
+        <!-- Sphere + prompt (glowing box) -->
+        <Grid Grid.Row="1" Margin="14,12,14,14">
+          <Border Background="#0D1318" CornerRadius="4" BorderBrush="#263842" BorderThickness="1" Padding="8">
+            <Grid ColumnDefinitions="64,*,44">
+              <Grid Width="56" Height="56" VerticalAlignment="Top" Margin="0,2,8,0">
+                <controls:AssistantSphere IsActive="{Binding IsAiThinking}" IsEngaged="{Binding HasPrompt}" Accent="#00AEEF"/>
+              </Grid>
+
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                <Grid ColumnDefinitions="Auto,*">
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock Text="Assistant" Classes="cardtitle"/>
+                    <TextBlock Text="· ready" Classes="dim" FontSize="10.5" IsVisible="{Binding !IsAiThinking}"/>
+                    <TextBlock Text="· analysing…" Foreground="#00AEEF" FontSize="10.5" IsVisible="{Binding IsAiThinking}"/>
+                  </StackPanel>
+                  <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Button Content="Break down scan" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is taking up all my space? Break down the scan."/>
+                      <Button Content="Safe cleanups" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up to free disk space?"/>
+                      <Button Content="node_modules" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is node_modules, and can I delete it?"/>
+                      <Button Content="Check memory" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?"/>
                     </StackPanel>
-                    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
-                      <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="Break down scan" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is taking up all my space? Break down the scan."/>
-                        <Button Content="Safe cleanups" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up to free disk space?"/>
-                        <Button Content="node_modules" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is node_modules, and can I delete it?"/>
-                        <Button Content="Check memory" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?"/>
-                      </StackPanel>
-                    </ScrollViewer>
-                  </Grid>
-                  <TextBox Text="{Binding Prompt}" Watermark="Ask about the current scan, disk usage, memory or the selected file…"
-                           MinHeight="40" VerticalContentAlignment="Center" FontSize="12.5">
-                    <TextBox.KeyBindings>
-                      <KeyBinding Gesture="Enter" Command="{Binding SendCommand}"/>
-                    </TextBox.KeyBindings>
-                  </TextBox>
-                </StackPanel>
+                  </ScrollViewer>
+                </Grid>
+                <TextBox Text="{Binding Prompt}" Watermark="Ask about the current scan, disk usage, memory or the selected file…"
+                         MinHeight="40" VerticalContentAlignment="Center" FontSize="12.5"
+                         IsEnabled="{Binding !IsAiThinking}">
+                  <TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter" Command="{Binding SendCommand}"/>
+                  </TextBox.KeyBindings>
+                </TextBox>
+              </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom" Margin="12,0,0,6">
-                  <ToggleButton x:Name="ChatToggle" IsChecked="True" Content="History" Height="40" Padding="14,0"/>
-                  <Button Content="Ask" Classes="primary" Command="{Binding SendCommand}" Height="40" Padding="26,0"/>
-                </StackPanel>
-              </Grid>
-            </Border>
-            <controls:AiGlowBorder Margin="-8" Radius="14" IsActive="{Binding IsAiThinking}"/>
-          </Grid>
+              <Button Grid.Column="2" Classes="primary send-icon" Command="{Binding SendCommand}"
+                      Width="40" Height="40" VerticalAlignment="Bottom" Margin="8,0,0,0"
+                      IsEnabled="{Binding !IsAiThinking}"
+                      ToolTip.Tip="Ask assistant">
+                <PathIcon Data="M409 337C418.4 327.6 418.4 312.4 409 303.1L265 159C258.1 152.1 247.8 150.1 238.8 153.8C229.8 157.5 224 166.3 224 176L224 256L112 256C85.5 256 64 277.5 64 304L64 336C64 362.5 85.5 384 112 384L224 384L224 464C224 473.7 229.8 482.5 238.8 486.2C247.8 489.9 258.1 487.9 265 481L409 337zM416 480C398.3 480 384 494.3 384 512C384 529.7 398.3 544 416 544L480 544C533 544 576 501 576 448L576 192C576 139 533 96 480 96L416 96C398.3 96 384 110.3 384 128C384 145.7 398.3 160 416 160L480 160C497.7 160 512 174.3 512 192L512 448C512 465.7 497.7 480 480 480L416 480z"
+                          Width="18" Height="18" Foreground="White"/>
+              </Button>
+            </Grid>
+          </Border>
+        </Grid>
 
-          <!-- Conversation: sits under the box and takes no space until there are messages -->
-          <Border Grid.Row="1" MaxHeight="280" Margin="22,0,30,16" Padding="4,0">
-            <Border.IsVisible>
-              <MultiBinding Converter="{x:Static BoolConverters.And}">
-                <Binding Path="#ChatToggle.IsChecked"/>
-                <Binding Path="HasMessages"/>
-              </MultiBinding>
-            </Border.IsVisible>
-            <Grid RowDefinitions="Auto,*">
-              <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
-                <TextBlock Text="Conversation" Classes="eyebrow" VerticalAlignment="Center"/>
-                <Button Grid.Column="1" Content="Clear" Classes="sm" Command="{Binding ClearChatCommand}"/>
-              </Grid>
-              <ScrollViewer Grid.Row="1">
+        <!-- Conversation fills the upper rail; the prompt stays anchored at the bottom. -->
+        <Border Grid.Row="0" Margin="14,14,14,0" Padding="4,0" IsVisible="{Binding HasMessages}">
+          <Grid RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+              <TextBlock Text="Conversation" Classes="eyebrow" VerticalAlignment="Center"/>
+              <Button Grid.Column="1" Content="Clear" Classes="sm" Command="{Binding ClearChatCommand}"/>
+            </Grid>
+            <ScrollViewer Grid.Row="1">
+              <StackPanel>
                 <ItemsControl ItemsSource="{Binding Messages}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Border Background="{Binding Background}" BorderBrush="#2E333A" BorderThickness="1" CornerRadius="10"
-                              Padding="14,10" Margin="0,0,0,8" HorizontalAlignment="{Binding Alignment}" MaxWidth="760">
+                      <Border Background="{Binding Background}" BorderBrush="#263842" BorderThickness="1" CornerRadius="4"
+                              Padding="12,10" Margin="0,0,0,8" HorizontalAlignment="{Binding Alignment}" MaxWidth="300">
                         <StackPanel Spacing="4">
-                          <TextBlock Text="{Binding Author}" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="1.1" Foreground="#4D96F0"/>
+                          <TextBlock Text="{Binding Author}" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="1.1" Foreground="#00AEEF"/>
                           <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" FontSize="12.5" LineHeight="19" Foreground="#E6E8EB"/>
                         </StackPanel>
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-              </ScrollViewer>
-            </Grid>
-          </Border>
+                <Border IsVisible="{Binding IsAiThinking}" Background="#101C23" BorderBrush="#234556" BorderThickness="1"
+                        CornerRadius="4" Padding="12,9" Margin="0,0,0,8" HorizontalAlignment="Left">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <controls:ThinkingIndicator Width="42" Height="18" IsActive="{Binding IsAiThinking}"/>
+                    <TextBlock Text="SystemMind is thinking" Classes="muted" FontSize="11.5" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </ScrollViewer>
+          </Grid>
+        </Border>
 
-        </Grid>
-      </Border>
-    </Grid>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

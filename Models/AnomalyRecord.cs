@@ -25,16 +25,23 @@ public sealed class AnomalyRecord : INotifyPropertyChanged
 
     public string CategoryLabel => Category switch
     {
-        "UnexpectedShutdown" => "Unexpected shutdowns", "BSOD" => "Blue screens",
-        "Crash" => "Application crashes", "AppHang" => "Application hangs",
-        "GpuTimeout" => "Graphics timeouts", "DiskError" => "Storage errors",
-        "DriverError" => "Driver errors", "MemoryExhaustion" => "Memory pressure",
-        "HardwareError" => "Hardware errors", _ => "Other events"
+        "UnexpectedShutdown" => "Unexpected shutdowns",
+        "BSOD" => "Blue screens",
+        "Crash" => "Application crashes",
+        "AppHang" => "Application hangs",
+        "GpuTimeout" => "Graphics timeouts",
+        "DiskError" => "Storage errors",
+        "DriverError" => "Driver errors",
+        "MemoryExhaustion" => "Memory pressure",
+        "HardwareError" => "Hardware errors",
+        _ => "Other events"
     };
     public string SeverityBadge => Severity.ToString().ToUpperInvariant();
     public string SeverityColor => Severity switch
     {
-        AnomalySeverity.Critical => "#F0525F", AnomalySeverity.Warning => "#F5B335", _ => "#4D96F0"
+        AnomalySeverity.Critical => "#F0525F",
+        AnomalySeverity.Warning => "#F5B335",
+        _ => "#4D96F0"
     };
     public string RelativeTime => (DateTime.UtcNow - TimestampUtc) switch
     {

@@ -13,6 +13,9 @@
     <None Remove="SystemMind.Tests\**" />
   </ItemGroup>
   <ItemGroup>
+    <AvaloniaResource Include="images/Logo.png" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.4" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
