@@ -24,5 +24,7 @@ public partial class MainWindow : Window
                 }
             };
         }
+
+        Closed += (_, _) => (DataContext as MainViewModel)?.StopMonitoring();
     }
 }

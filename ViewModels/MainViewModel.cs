@@ -18,6 +18,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _activeView = "StorageExplorer"; // Default to WinDirStat view!
     private string _statusBanner = "";
     private bool _isAiThinking;
+    private readonly DispatcherTimer _resourceTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private string _gpuText = "GPU: unavailable";
+    private ResourceMetric _resourceMetric = ResourceMetric.Ram;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -30,12 +33,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<ProcessRow> TopProcesses { get; } = [];
     public ObservableCollection<DiskRow> DiskItems { get; } = [];
     public ObservableCollection<ChatMessage> Messages { get; } = [];
+    public ObservableCollection<ResourceCategoryUsage> ResourceGroups { get; } = [];
+
+    public string ResourceMetricName => _resourceMetric switch { ResourceMetric.Cpu => "CPU", ResourceMetric.Gpu => "GPU", _ => "RAM" };
+    public string ResourceSortButtonText => $"Sort by: {ResourceMetricName}  ↻";
 
     public ICommand RefreshCommand { get; }
     public ICommand SendCommand { get; }
     public ICommand QuickAskCommand { get; }
     public ICommand SetViewCommand { get; }
     public ICommand ClearChatCommand { get; }
+    public ICommand CycleResourceMetricCommand { get; }
 
     public string ActiveView
     {
@@ -51,6 +59,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 OnChanged(nameof(IsCleanupActive));
                 OnChanged(nameof(IsPerformanceActive));
                 OnChanged(nameof(IsSettingsActive));
+                OnChanged(nameof(IsLiveResourcesActive));
                 OnChanged(nameof(IsCompatibilityActive));
             }
         }
@@ -61,6 +70,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsCleanupActive => ActiveView == "Cleanup";
     public bool IsPerformanceActive => ActiveView == "Performance";
     public bool IsSettingsActive => ActiveView == "Settings";
+    public bool IsLiveResourcesActive => ActiveView == "LiveResources";
     public bool IsCompatibilityActive => ActiveView == "Compatibility";
 
     public string Greeting => DateTime.Now.Hour < 12 ? "morning" : DateTime.Now.Hour < 18 ? "afternoon" : "evening";
@@ -89,6 +99,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string CpuHeadline => $"{_snapshot?.CpuPercent:F0}%";
     public string CpuDetail => $"Across {Environment.ProcessorCount} logical cores";
     public double CpuPercent => _snapshot?.CpuPercent ?? 0;
+    public string CpuResourceText => $"{CpuPercent:F0}%";
+    public string MemoryResourceText => _snapshot == null ? "—" : $"{_snapshot.MemoryUsedGb:F1} / {_snapshot.MemoryTotalGb:F1} GB";
+    public string DiskResourceText => _snapshot == null ? "—" : $"{_snapshot.DiskPercent:F0}% used";
+    public double MemoryResourcePercent => _snapshot?.MemoryPercent ?? 0;
+    public double DiskResourcePercent => _snapshot?.DiskPercent ?? 0;
+    public string GpuText => _gpuText;
+    public double GpuPercent => _snapshot?.GpuPercent ?? 0;
+    public bool IsGpuAvailable => _snapshot?.GpuPercent.HasValue == true;
+    public string UsageBreakdownTitle
+    {
+        get
+        {
+            var processes = _snapshot?.AllProcesses ?? [];
+            return _resourceMetric switch
+            {
+                ResourceMetric.Cpu => $"WHO IS USING CPU · {processes.Sum(process => process.CpuPercent):F1}% COMBINED PROCESS USAGE",
+                ResourceMetric.Gpu when !IsGpuAvailable => "WHO IS USING GPU · GPU COUNTERS UNAVAILABLE",
+                ResourceMetric.Gpu => $"WHO IS USING GPU · {processes.Sum(process => process.GpuPercent ?? 0):F1}% COMBINED ENGINE ACTIVITY",
+                _ => $"WHO IS USING MEMORY · {processes.Sum(process => process.MemoryMb) / 1024d:F1} GB TRACKED ACROSS PROCESSES"
+            };
+        }
+    }
+    public string CpuStatus => StatusFor(CpuPercent, 75, 90, "OK", "BUSY", "VERY BUSY");
+    public string CpuStatusColor => ColorFor(CpuPercent, 75, 90);
+    public string MemoryStatus => StatusFor(MemoryResourcePercent, 75, 90, "OK", "HIGH", "FULL");
+    public string MemoryStatusColor => ColorFor(MemoryResourcePercent, 75, 90);
+    public string DiskStatus => StatusFor(DiskResourcePercent, 75, 90, "OK", "BUSY", "VERY BUSY");
+    public string DiskStatusColor => ColorFor(DiskResourcePercent, 75, 90);
+    public string GpuStatus => !IsGpuAvailable ? "N/A" : StatusFor(GpuPercent, 75, 90, "OK", "BUSY", "VERY BUSY");
+    public string GpuStatusColor => !IsGpuAvailable ? "#8FA3B8" : ColorFor(GpuPercent, 75, 90);
 
     public MainViewModel()
     {
@@ -110,6 +150,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Settings.NotifyUser += msg => ShowBanner(msg);
 
         RefreshCommand = new RelayCommand(Refresh);
+        CycleResourceMetricCommand = new RelayCommand(CycleResourceMetric);
         SendCommand = new AsyncCommand(_ => SendAsync());
         QuickAskCommand = new AsyncCommand(p => AskAsync(p?.ToString() ?? ""));
         SetViewCommand = new RelayCommand(p => { if (p is string view) ActiveView = view; });
@@ -120,6 +161,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         });
 
         Refresh();
+        _resourceTimer.Tick += (_, _) =>
+        {
+            Refresh();
+            if (IsPerformanceActive) Performance.Refresh();
+        };
+        _resourceTimer.Start();
 
         // Automatically start background scan of Root directory (/) on startup
         _ = StorageExplorer.StartScanAsync();
@@ -143,6 +190,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (StatusBanner == msg) StatusBanner = "";
         });
     }
+
+    public void StopMonitoring() => _resourceTimer.Stop();
 
     private void Refresh()
     {
@@ -175,6 +224,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         foreach (var d in _snapshot.Disks)
             DiskItems.Add(new DiskRow(d.Name, $"{d.UsedGb:F0} / {d.TotalGb:F0} GB", d.TotalGb == 0 ? 0 : d.UsedGb / d.TotalGb * 100));
 
+        _gpuText = _snapshot.GpuPercent is { } gpu ? $"{gpu:F0}%" : "Unavailable";
+        OnChanged(nameof(GpuText));
+        OnChanged(nameof(GpuPercent));
+        OnChanged(nameof(IsGpuAvailable));
+        OnChanged(nameof(UsageBreakdownTitle));
+        OnChanged(nameof(ResourceSortButtonText));
+        OnChanged(nameof(CpuStatus));
+        OnChanged(nameof(CpuStatusColor));
+        OnChanged(nameof(MemoryStatus));
+        OnChanged(nameof(MemoryStatusColor));
+        OnChanged(nameof(DiskStatus));
+        OnChanged(nameof(DiskStatusColor));
+        OnChanged(nameof(GpuStatus));
+        OnChanged(nameof(GpuStatusColor));
+        OnChanged(nameof(CpuResourceText));
+        OnChanged(nameof(MemoryResourceText));
+        OnChanged(nameof(MemoryResourcePercent));
+        OnChanged(nameof(DiskResourceText));
+        OnChanged(nameof(DiskResourcePercent));
+
+        RebuildResourceGroups();
         StorageExplorer.RefreshDrives();
 
         foreach (var name in new[]
@@ -188,8 +258,112 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private void RebuildResourceGroups()
+    {
+        if (_snapshot == null) return;
+        var expandedByCategory = ResourceGroups.ToDictionary(group => group.Name, group => group.IsExpanded, StringComparer.OrdinalIgnoreCase);
+        var categoryColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Local AI"] = "#A78BFA",
+            ["Browsing"] = "#F5A044",
+            ["Gaming"] = "#EF6C8F",
+            ["Development"] = "#5B8FF9",
+            ["System"] = "#77838F",
+            ["System & other"] = "#77838F",
+            ["Other"] = "#77838F"
+        };
+        var groupedProcesses = (_snapshot.AllProcesses ?? [])
+            .GroupBy(process => GetDisplayCategory(process.Name, process.Category), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new
+            {
+                Name = group.Key,
+                Processes = group.OrderByDescending(GetProcessMetric).ToList(),
+                MemoryMb = group.Sum(process => process.MemoryMb),
+                CpuPercent = group.Sum(process => process.CpuPercent),
+                GpuPercent = group.Sum(process => process.GpuPercent ?? 0),
+                Usage = _resourceMetric switch
+                {
+                    ResourceMetric.Cpu => group.Sum(process => process.CpuPercent),
+                    ResourceMetric.Gpu => group.Sum(process => process.GpuPercent ?? 0),
+                    _ => group.Sum(process => process.MemoryMb)
+                }
+            })
+            .OrderByDescending(group => group.Usage)
+            .ToList();
+        var totalUsage = groupedProcesses.Sum(group => group.Usage);
+        ResourceGroups.Clear();
+        foreach (var group in groupedProcesses)
+        {
+            var usage = group.Usage;
+            if (_resourceMetric == ResourceMetric.Ram && group.MemoryMb <= 0) continue;
+            var usageText = _resourceMetric switch
+            {
+                ResourceMetric.Cpu => $"{group.CpuPercent:F1}%",
+                ResourceMetric.Gpu when !IsGpuAvailable => "N/A",
+                ResourceMetric.Gpu => $"{group.GpuPercent:F1}%",
+                _ => $"{group.MemoryMb / 1024d:F1} GB"
+            };
+            var details = group.Processes.Select(process => new ResourceProcessDetail(
+                process.Name,
+                process.Id,
+                $"{process.CpuPercent:F1}%",
+                process.GpuPercent is { } gpu ? $"{gpu:F1}%" : "N/A",
+                $"{process.MemoryMb:F1} MB")).ToList();
+            var category = new ResourceCategoryUsage(
+                group.Name,
+                usageText,
+                totalUsage <= 0 ? 0 : usage / totalUsage * 100,
+                categoryColors.GetValueOrDefault(group.Name, "#77838F"),
+                details);
+            category.IsExpanded = expandedByCategory.GetValueOrDefault(group.Name);
+            ResourceGroups.Add(category);
+        }
+        OnChanged(nameof(UsageBreakdownTitle));
+        OnChanged(nameof(ResourceSortButtonText));
+    }
+
+    private void CycleResourceMetric()
+    {
+        _resourceMetric = _resourceMetric switch
+        {
+            ResourceMetric.Ram => ResourceMetric.Cpu,
+            ResourceMetric.Cpu => ResourceMetric.Gpu,
+            _ => ResourceMetric.Ram
+        };
+        OnChanged(nameof(ResourceMetricName));
+        OnChanged(nameof(ResourceSortButtonText));
+        RebuildResourceGroups();
+    }
+
+    private double GetProcessMetric(ProcessDetailedInfo process) => _resourceMetric switch
+    {
+        ResourceMetric.Cpu => process.CpuPercent,
+        ResourceMetric.Gpu => process.GpuPercent ?? 0,
+        _ => process.MemoryMb
+    };
+
     private void AddRecommendation(bool urgent, string title, string detail, string impact) =>
         Recommendations.Add(new Recommendation(title, detail, impact, urgent ? "#FF9B70" : "#45D6A5"));
+
+    private static string GetDisplayCategory(string processName, string category)
+    {
+        if (new[] { "ollama", "lmstudio", "llama", "kobold", "vllm", "text-generation-webui" }
+            .Any(token => processName.Contains(token, StringComparison.OrdinalIgnoreCase))) return "Local AI";
+        return category switch
+        {
+            "Development" => "Development",
+            "Browsing" => "Browsing",
+            "Gaming" => "Gaming",
+            "System" or "Other" => "System & other",
+            _ => category
+        };
+    }
+
+    private static string StatusFor(double value, double busyAt, double fullAt, string normal, string busy, string full) =>
+        value >= fullAt ? full : value >= busyAt ? busy : normal;
+
+    private static string ColorFor(double value, double busyAt, double fullAt) =>
+        value >= fullAt ? "#F0525F" : value >= busyAt ? "#F5B335" : "#35D3A0";
 
     private async Task SendAsync()
     {
@@ -246,6 +420,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 public record Recommendation(string Title, string Detail, string Impact, string Accent);
 public record ProcessRow(string Name, string Memory);
 public record DiskRow(string Name, string Value, double Percent, string MountPoint = "");
+public enum ResourceMetric { Ram, Cpu, Gpu }
+public record ResourceProcessDetail(string Name, int Id, string CpuText, string GpuText, string MemoryText);
 
 public sealed class ChatMessage : INotifyPropertyChanged
 {
@@ -297,6 +473,43 @@ public sealed class ChatMessage : INotifyPropertyChanged
             await Dispatcher.UIThread.InvokeAsync(() => DisplayText = next);
             await Task.Delay(12);
         }
+    }
+}
+
+public sealed class ResourceCategoryUsage : INotifyPropertyChanged
+{
+    private bool _isExpanded;
+
+    public string Name { get; }
+    public string UsageText { get; }
+    public double Percent { get; }
+    public string Color { get; }
+    public IReadOnlyList<ResourceProcessDetail> Processes { get; }
+    public ICommand ToggleExpandedCommand { get; }
+
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set
+        {
+            if (_isExpanded == value) return;
+            _isExpanded = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ToggleText)));
+        }
+    }
+
+    public string ToggleText => IsExpanded ? "Hide processes" : "Show processes";
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ResourceCategoryUsage(string name, string usageText, double percent, string color, IReadOnlyList<ResourceProcessDetail> processes)
+    {
+        Name = name;
+        UsageText = usageText;
+        Percent = percent;
+        Color = color;
+        Processes = processes;
+        ToggleExpandedCommand = new RelayCommand(() => IsExpanded = !IsExpanded);
     }
 }
 
