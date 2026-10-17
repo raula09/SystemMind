@@ -83,3 +83,4 @@ Or configure keys directly in the in-app **Settings** tab. If no key is set or i
 - `Services/CleanupScannerService.cs`: Detects reclaimable caches, temporary files, old downloads, and build artifacts.
 - `Services/FileOperationsService.cs`: OS shell integration and safe path guardrails.
 - `ViewModels/`: `StorageExplorerViewModel`, `CleanupViewModel`, `PerformanceViewModel`, `SettingsViewModel`, `MainViewModel`.
+# SystemMind
