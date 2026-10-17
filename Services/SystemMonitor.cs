@@ -1,47 +1,129 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using SystemMind.Models;
 
 namespace SystemMind.Services;
 
 public sealed class SystemMonitor
 {
+    private const double Mb = 1024d * 1024d;
+    private const double Gb = Mb * 1024d;
+
     public SystemSnapshot Capture()
     {
-        var (totalKb, availableKb) = ReadMemory();
-        var drives = DriveInfo.GetDrives().Where(d => d.IsReady && d.TotalSize > 0)
-            .Select(d => new DiskUsage(d.Name, (d.TotalSize - d.AvailableFreeSpace) / Gb, d.TotalSize / Gb)).ToList();
-        var processes = Process.GetProcesses().Select(p =>
+        var (totalGb, usedGb) = ReadMemory();
+        var drives = DriveInfo.GetDrives()
+            .Where(d => d.IsReady && d.TotalSize > 0)
+            .Select(d => new DiskUsage(
+                string.IsNullOrEmpty(d.VolumeLabel) ? d.Name : $"{d.Name} ({d.VolumeLabel})",
+                (d.TotalSize - d.AvailableFreeSpace) / Gb,
+                d.TotalSize / Gb))
+            .ToList();
+
+        var allProcs = new List<ProcessDetailedInfo>();
+        try
         {
-            try { return new ProcessUsage(p.ProcessName, p.WorkingSet64 / Mb); }
-            catch { return new ProcessUsage(p.ProcessName, 0); }
-        }).OrderByDescending(p => p.MemoryMb).Take(6).ToList();
+            var processes = Process.GetProcesses();
+            foreach (var p in processes)
+            {
+                try
+                {
+                    var mem = p.WorkingSet64 / Mb;
+                    allProcs.Add(new ProcessDetailedInfo(p.Id, p.ProcessName, mem, 0, ""));
+                }
+                catch { }
+            }
+        }
+        catch { }
+
+        var sortedProcs = allProcs.OrderByDescending(p => p.MemoryMb).ToList();
+        var topProcs = sortedProcs.Take(8).Select(p => new ProcessUsage(p.Name, p.MemoryMb)).ToList();
+
         var cpu = ReadCpu();
-        return new SystemSnapshot((totalKb - availableKb) / 1024d / 1024d, totalKb / 1024d / 1024d,
-            drives.Sum(d => d.UsedGb), drives.Sum(d => d.TotalGb), cpu, processes, drives);
+        var diskUsed = drives.Sum(d => d.UsedGb);
+        var diskTotal = drives.Sum(d => d.TotalGb);
+
+        return new SystemSnapshot(
+            usedGb,
+            totalGb,
+            diskUsed,
+            diskTotal,
+            cpu,
+            topProcs,
+            drives,
+            sortedProcs);
     }
 
-    private static (double Total, double Available) ReadMemory()
+    public bool TerminateProcess(int pid)
     {
-        const string memInfo = "/proc/meminfo";
-        if (File.Exists(memInfo))
+        try
         {
-            var values = File.ReadLines(memInfo).Select(line => line.Split(':', 2))
-                .Where(p => p.Length == 2).ToDictionary(p => p[0], p => double.Parse(p[1].Trim().Split(' ')[0], CultureInfo.InvariantCulture));
-            return (values.GetValueOrDefault("MemTotal"), values.GetValueOrDefault("MemAvailable"));
+            var p = Process.GetProcessById(pid);
+            p.Kill();
+            return true;
         }
-        return (0, 0);
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static (double TotalGb, double UsedGb) ReadMemory()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            const string memInfo = "/proc/meminfo";
+            if (File.Exists(memInfo))
+            {
+                try
+                {
+                    var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var line in File.ReadLines(memInfo))
+                    {
+                        var parts = line.Split(':', 2);
+                        if (parts.Length == 2)
+                        {
+                            var key = parts[0].Trim();
+                            var valStr = parts[1].Trim().Split(' ')[0];
+                            if (double.TryParse(valStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var kb))
+                            {
+                                dict[key] = kb;
+                            }
+                        }
+                    }
+
+                    var totalKb = dict.GetValueOrDefault("MemTotal", 0);
+                    var availKb = dict.GetValueOrDefault("MemAvailable", 0);
+                    var usedKb = Math.Max(0, totalKb - availKb);
+
+                    return (totalKb / 1024d / 1024d, usedKb / 1024d / 1024d);
+                }
+                catch { }
+            }
+        }
+
+        // Generic fallback using GC / Process
+        var total = 16.0; // Estimate
+        var used = GC.GetTotalMemory(false) / Gb;
+        return (total, used);
     }
 
     private static double ReadCpu()
     {
-        try
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            var load = File.ReadLines("/proc/loadavg").First().Split(' ')[0];
-            return Math.Min(100, double.Parse(load, CultureInfo.InvariantCulture) / Environment.ProcessorCount * 100);
+            try
+            {
+                var load = File.ReadLines("/proc/loadavg").FirstOrDefault()?.Split(' ')[0];
+                if (double.TryParse(load, NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
+                {
+                    return Math.Clamp((val / Environment.ProcessorCount) * 100.0, 0, 100);
+                }
+            }
+            catch { }
         }
-        catch { return 0; }
+
+        return 0;
     }
-    private const double Mb = 1024d * 1024d;
-    private const double Gb = Mb * 1024d;
 }

@@ -1,50 +1,620 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SystemMind.ViewModels"
+        xmlns:models="using:SystemMind.Models"
+        xmlns:controls="using:SystemMind.Controls"
         x:Class="SystemMind.MainWindow"
         x:DataType="vm:MainViewModel"
-        Width="1440" Height="900" MinWidth="1050" MinHeight="720"
-        Background="#071019" Title="SystemMind">
+        Width="1480" Height="920" MinWidth="1100" MinHeight="750"
+        Background="#071019" Title="SystemMind — AI Storage &amp; System Analyzer">
+
   <Window.Styles>
-    <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="24"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
-    <Style Selector="Border.card"><Setter Property="Background" Value="#101C2A"/><Setter Property="CornerRadius" Value="16"/><Setter Property="Padding" Value="20"/></Style>
-    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#91A1B5"/></Style>
-    <Style Selector="ProgressBar"><Setter Property="Height" Value="8"/><Setter Property="Foreground" Value="#4FE0B0"/><Setter Property="Background" Value="#1C3041"/></Style>
-    <Style Selector="Button"><Setter Property="CornerRadius" Value="9"/><Setter Property="Padding" Value="14,8"/></Style>
+    <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="22"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="#101C2A"/><Setter Property="CornerRadius" Value="14"/><Setter Property="Padding" Value="16"/></Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#8FA3B8"/></Style>
+    <Style Selector="ProgressBar"><Setter Property="Height" Value="6"/><Setter Property="Foreground" Value="#35D3A0"/><Setter Property="Background" Value="#192A3A"/><Setter Property="CornerRadius" Value="3"/></Style>
+    <Style Selector="Button"><Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="12,7"/><Setter Property="Cursor" Value="Hand"/></Style>
+    <Style Selector="Button.nav">
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#A2B4C7"/>
+      <Setter Property="Padding" Value="14,10"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="Button.nav-active">
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Background" Value="#162A3B"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="14,10"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="Button.action-primary">
+      <Setter Property="Background" Value="#35D3A0"/>
+      <Setter Property="Foreground" Value="#061019"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.action-danger">
+      <Setter Property="Background" Value="#E05252"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Background" Value="#0D1824"/>
+      <Setter Property="BorderBrush" Value="#1C2E42"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
   </Window.Styles>
-  <Grid ColumnDefinitions="210,*,380">
-    <Border Background="#0B1521" Padding="18">
-      <StackPanel Spacing="8">
-        <StackPanel Orientation="Horizontal" Spacing="10" Margin="4,4,0,32">
-          <Border Background="#35D3A0" CornerRadius="9" Width="32" Height="32"><TextBlock Text="S" FontWeight="Bold" FontSize="18" Foreground="#061019" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-          <TextBlock Text="SystemMind" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold"/>
+
+  <Grid ColumnDefinitions="220,*,390">
+    <!-- LEFT NAVIGATION SIDEBAR -->
+    <Border Background="#0B1521" BorderBrush="#142333" BorderThickness="0,0,1,0" Padding="16">
+      <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Logo -->
+        <StackPanel Spacing="6" Margin="4,4,0,24">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Border Background="#35D3A0" CornerRadius="8" Width="32" Height="32">
+              <TextBlock Text="⚡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="SystemMind" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+              <TextBlock Text="Storage &amp; AI Agent" FontSize="11" Classes="muted"/>
+            </StackPanel>
+          </StackPanel>
         </StackPanel>
-        <Button Content="Overview" HorizontalContentAlignment="Left" Background="#19384A"/>
-        <Button Content="Storage explorer" HorizontalContentAlignment="Left" Background="Transparent"/>
-        <Button Content="Performance" HorizontalContentAlignment="Left" Background="Transparent"/>
-        <Button Content="Compatibility" HorizontalContentAlignment="Left" Background="Transparent"/>
-        <TextBlock Text="TOOLS" Classes="muted" FontSize="11" Margin="12,28,0,5"/>
-        <Button Content="Cleanup assistant" HorizontalContentAlignment="Left" Background="Transparent"/>
-        <Button Content="Settings" HorizontalContentAlignment="Left" Background="Transparent"/>
-        <StackPanel VerticalAlignment="Bottom" Margin="0,120,0,0">
-          <Border Background="#132638" CornerRadius="12" Padding="12"><StackPanel Spacing="4"><TextBlock Text="AI system advisor" FontWeight="SemiBold"/><TextBlock Text="Uses your live system snapshot" Classes="muted" FontSize="11"/></StackPanel></Border>
+
+        <!-- Navigation items -->
+        <StackPanel Grid.Row="1" Spacing="4">
+          <TextBlock Text="WINDIRSTAT" Classes="muted" FontSize="10" FontWeight="Bold" Margin="10,0,0,6"/>
+          
+          <Button Content="📊 Storage explorer"
+                  Classes.nav-active="{Binding IsStorageExplorerActive}"
+                  Classes.nav="{Binding !IsStorageExplorerActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="StorageExplorer"/>
+
+          <Button Content="🧹 Cleanup assistant"
+                  Classes.nav-active="{Binding IsCleanupActive}"
+                  Classes.nav="{Binding !IsCleanupActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Cleanup"/>
+
+          <TextBlock Text="SYSTEM" Classes="muted" FontSize="10" FontWeight="Bold" Margin="10,18,0,6"/>
+
+          <Button Content="🖥️ Overview"
+                  Classes.nav-active="{Binding IsOverviewActive}"
+                  Classes.nav="{Binding !IsOverviewActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Overview"/>
+
+          <Button Content="⚡ Performance"
+                  Classes.nav-active="{Binding IsPerformanceActive}"
+                  Classes.nav="{Binding !IsPerformanceActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Performance"/>
+
+          <Button Content="⚙️ Settings"
+                  Classes.nav-active="{Binding IsSettingsActive}"
+                  Classes.nav="{Binding !IsSettingsActive}"
+                  Command="{Binding SetViewCommand}" CommandParameter="Settings"/>
         </StackPanel>
-      </StackPanel>
+
+        <!-- Bottom status badge -->
+        <Border Grid.Row="2" Background="#101D2B" CornerRadius="10" Padding="12" Margin="0,16,0,0">
+          <StackPanel Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Ellipse Width="8" Height="8" Fill="#35D3A0" VerticalAlignment="Center"/>
+              <TextBlock Text="AI Agent Ready" FontWeight="SemiBold" FontSize="12" Foreground="#DDE8F4"/>
+            </StackPanel>
+            <TextBlock Text="Scan-aware reasoning &amp; cleanup engine active" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </Grid>
     </Border>
-    <ScrollViewer Grid.Column="1" Padding="34,28">
-      <StackPanel Spacing="22">
-        <Grid ColumnDefinitions="*,Auto"><StackPanel><TextBlock Text="Good {Binding Greeting}" Classes="muted"/><TextBlock Text="Your system, explained." Classes="title"/><TextBlock Text="Live health signals and practical ways to make room." Classes="muted" Margin="0,5,0,0"/></StackPanel><Border Background="#0F2731" CornerRadius="12" Padding="13,8" VerticalAlignment="Top"><StackPanel Orientation="Horizontal" Spacing="8"><Ellipse Width="8" Height="8" Fill="#45D6A5" VerticalAlignment="Center"/><TextBlock Text="Live monitoring"/></StackPanel></Border></Grid>
-        <Grid ColumnDefinitions="*,*,*">
-          <Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="MEMORY" Classes="muted" FontSize="11"/><TextBlock Text="{Binding MemoryHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding MemoryPercent}" Maximum="100"/><TextBlock Text="{Binding MemoryDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
-          <Border Grid.Column="1" Classes="card"><StackPanel Spacing="10"><TextBlock Text="STORAGE" Classes="muted" FontSize="11"/><TextBlock Text="{Binding StorageHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding StoragePercent}" Maximum="100" Foreground="#7BA7FF"/><TextBlock Text="{Binding StorageDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
-          <Border Grid.Column="2" Classes="card"><StackPanel Spacing="10"><TextBlock Text="CPU LOAD" Classes="muted" FontSize="11"/><TextBlock Text="{Binding CpuHeadline}" FontSize="25" FontWeight="SemiBold"/><ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#F6B75D"/><TextBlock Text="{Binding CpuDetail}" Classes="muted" FontSize="12"/></StackPanel></Border>
+
+    <!-- CENTER MAIN VIEW -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+      <!-- Notification Banner -->
+      <Border IsVisible="{Binding HasStatusBanner}" Background="#1E3A8A" CornerRadius="8" Margin="18,12,18,0" Padding="12,8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="{Binding StatusBanner}" Foreground="#FFFFFF" FontWeight="Medium" VerticalAlignment="Center"/>
         </Grid>
-        <Border Classes="card"><StackPanel Spacing="16"><Grid ColumnDefinitions="*,Auto"><StackPanel><TextBlock Text="What needs your attention" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="Recommendations based on your current system state." Classes="muted" FontSize="12"/></StackPanel><Button Content="Refresh" Command="{Binding RefreshCommand}"/></Grid><ItemsControl ItemsSource="{Binding Recommendations}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#0B1622" CornerRadius="10" Padding="14" Margin="0,0,0,8"><Grid ColumnDefinitions="8,*,Auto"><Border Background="{Binding Accent}" CornerRadius="4"/><StackPanel Grid.Column="1" Spacing="3" Margin="12,0,0,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/><TextBlock Text="{Binding Detail}" Classes="muted" TextWrapping="Wrap" FontSize="12"/></StackPanel><TextBlock Grid.Column="2" Text="{Binding Impact}" Foreground="#A8C8FF" VerticalAlignment="Center"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
-        <Grid ColumnDefinitions="*,*"><Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="Top memory users" FontSize="18" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding TopProcesses}"><ItemsControl.ItemTemplate><DataTemplate><Grid ColumnDefinitions="*,Auto" Margin="0,5"><TextBlock Text="{Binding Name}"/><TextBlock Grid.Column="1" Text="{Binding Memory}" Classes="muted"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border><Border Grid.Column="1" Classes="card" Margin="14,0,0,0"><StackPanel Spacing="10"><TextBlock Text="Storage map" FontSize="18" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding DiskItems}"><ItemsControl.ItemTemplate><DataTemplate><StackPanel Margin="0,4"><Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Name}"/><TextBlock Grid.Column="1" Text="{Binding Value}" Classes="muted"/></Grid><ProgressBar Value="{Binding Percent}" Maximum="100" Margin="0,5,0,0"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border></Grid>
-      </StackPanel>
-    </ScrollViewer>
-    <Border Grid.Column="2" Background="#0B1521" BorderBrush="#1A2A3A" BorderThickness="1,0,0,0" Padding="20">
-      <Grid RowDefinitions="Auto,*,Auto"><StackPanel Spacing="4"><TextBlock Text="SystemMind AI" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="Ask about your system in plain English" Classes="muted" FontSize="12"/></StackPanel><ScrollViewer Grid.Row="1" Margin="0,20"><ItemsControl ItemsSource="{Binding Messages}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="{Binding Background}" CornerRadius="12" Padding="12" Margin="0,0,0,10" HorizontalAlignment="{Binding Alignment}"><StackPanel Spacing="4"><TextBlock Text="{Binding Author}" FontSize="11" FontWeight="SemiBold" Foreground="#72DDBB"/><TextBlock Text="{Binding Text}" TextWrapping="Wrap"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer><StackPanel Grid.Row="2" Spacing="10"><WrapPanel><Button Content="Why is RAM high?" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?" Margin="0,0,6,6"/><Button Content="Free storage" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up?" Margin="0,0,6,6"/><Button Content="Can I run a game?" Command="{Binding QuickAskCommand}" CommandParameter="Can this computer run a modern game?"/></WrapPanel><Grid ColumnDefinitions="*,Auto"><TextBox Text="{Binding Prompt}" Watermark="Ask your system advisor…" AcceptsReturn="True" MinHeight="44" TextWrapping="Wrap"/><Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}" Background="#35C998" Foreground="#061019" Margin="8,0,0,0"/></Grid><TextBlock Text="Set OPENAI_API_KEY to enable AI answers. Local advice works without it." Classes="muted" FontSize="10"/></StackPanel></Grid>
+      </Border>
+
+      <!-- VIEW 1: WINDIRSTAT STORAGE EXPLORER -->
+      <Grid Grid.Row="1" IsVisible="{Binding IsStorageExplorerActive}" Margin="20,16" RowDefinitions="Auto,*,Auto,1.3*,Auto">
+        <!-- Toolbar: Path + Quick Buttons + Scan / Cancel -->
+        <Border Classes="card" Margin="0,0,0,12" Padding="12">
+          <StackPanel Spacing="10">
+            <!-- First line: Path input, browse, scan, cancel -->
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+              <TextBox Text="{Binding StorageExplorer.ScanPath}" Watermark="Enter folder path to scan (e.g. /home/user or /)..." VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+              <Button Grid.Column="1" Content="📁 Browse..." Command="{Binding StorageExplorer.BrowseFolderCommand}" Margin="0,0,8,0"/>
+              <Button Grid.Column="2" Content="▶ Scan" Classes="action-primary"
+                      Command="{Binding StorageExplorer.ScanCommand}"
+                      IsEnabled="{Binding StorageExplorer.CanScan}" Margin="0,0,8,0"/>
+              <Button Grid.Column="3" Content="⏹ Cancel" Classes="action-danger"
+                      Command="{Binding StorageExplorer.CancelCommand}"
+                      IsEnabled="{Binding StorageExplorer.IsScanning}"/>
+            </Grid>
+
+            <!-- Second line: Quick paths + Status -->
+            <Grid ColumnDefinitions="Auto,*">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Quick:" Classes="muted" VerticalAlignment="Center" FontSize="12"/>
+                <Button Content="Home (~)" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~"/>
+                <Button Content="Root (/)" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/"/>
+                <Button Content="Downloads" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Downloads"/>
+                <Button Content="Documents" Padding="8,4" FontSize="11" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Documents"/>
+              </StackPanel>
+              <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.StatusMessage}"
+                         Classes="muted" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Top Split: Directory Hierarchy Tree (Left) & Extension List (Right) -->
+        <Grid Grid.Row="1" ColumnDefinitions="1.3*,12,*">
+          <!-- Tree: Folders & Files sorted by size -->
+          <Border Classes="card">
+            <Grid RowDefinitions="Auto,*">
+              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,8,8">
+                <TextBlock Text="Directory Hierarchy (Largest First)" FontWeight="SemiBold" FontSize="13"/>
+                <TextBlock Grid.Column="1" Text="Size" Classes="muted" FontSize="12" Margin="0,0,16,0"/>
+                <TextBlock Grid.Column="2" Text="% Total" Classes="muted" FontSize="12"/>
+              </Grid>
+
+              <TreeView Grid.Row="1" ItemsSource="{Binding StorageExplorer.RootNodes}"
+                        SelectedItem="{Binding StorageExplorer.SelectedNode, Mode=TwoWay}">
+                <TreeView.ItemTemplate>
+                  <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,2">
+                      <TextBlock Text="{Binding IconText}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                      <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"
+                                 TextTrimming="CharacterEllipsis" MaxWidth="300" FontWeight="Medium"/>
+                      <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Foreground="#35D3A0"
+                                 FontWeight="SemiBold" FontSize="12" Margin="8,0,12,0" VerticalAlignment="Center"/>
+                      <TextBlock Grid.Column="3" Text="{Binding FormattedPercent}" Classes="muted"
+                                 FontSize="11" VerticalAlignment="Center"/>
+                    </Grid>
+                  </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+              </TreeView>
+            </Grid>
+          </Border>
+
+          <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+
+          <!-- WinDirStat Extension List (Right) -->
+          <Border Grid.Column="2" Classes="card">
+            <Grid RowDefinitions="Auto,*">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,4,8">
+                <TextBlock Text="Extension" FontWeight="SemiBold" FontSize="13"/>
+                <TextBlock Grid.Column="1" Text="Category" Classes="muted" FontSize="12" Margin="12,0,0,0"/>
+                <TextBlock Grid.Column="2" Text="Size" Classes="muted" FontSize="12" Margin="0,0,12,0"/>
+                <TextBlock Grid.Column="3" Text="% Size" Classes="muted" FontSize="12"/>
+              </Grid>
+
+              <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding StorageExplorer.Extensions}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#0C1724" CornerRadius="6" Padding="8,5" Margin="0,0,0,4">
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                          <!-- Extension color indicator -->
+                          <Border Background="{Binding ColorHex}" CornerRadius="3" Width="14" Height="14" VerticalAlignment="Center"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Extension}" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                          <TextBlock Grid.Column="2" Text="{Binding Category}" Classes="muted" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                          <TextBlock Grid.Column="3" Text="{Binding FormattedSize}" Foreground="#FFFFFF" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                          <TextBlock Grid.Column="4" Text="{Binding FormattedPercent}" Foreground="#8FA3B8" FontSize="11" VerticalAlignment="Center"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <!-- Divider / Splitter -->
+        <GridSplitter Grid.Row="2" Height="10" Background="Transparent" ResizeDirection="Rows"/>
+
+        <!-- Bottom: Interactive Squarified Treemap (WinDirStat Visualizer) -->
+        <Border Grid.Row="3" Classes="card" Padding="4">
+          <controls:TreemapControl x:Name="TreemapDisplay"
+                                   Items="{Binding StorageExplorer.TreemapItems}"
+                                   SelectedItem="{Binding StorageExplorer.SelectedTreemapItem, Mode=TwoWay}"
+                                   HoveredItem="{Binding StorageExplorer.HoveredTreemapItem, Mode=TwoWay}"/>
+        </Border>
+
+        <!-- Inspection Info & Action Toolbar -->
+        <Border Grid.Row="4" Background="#0B1622" CornerRadius="8" Padding="12,8" Margin="0,8,0,0">
+          <Grid ColumnDefinitions="*,Auto">
+            <!-- Inspection status info -->
+            <TextBlock Text="{Binding StorageExplorer.HoveredInfoText}"
+                       VerticalAlignment="Center" FontSize="12" Foreground="#D1DFEE" TextTrimming="CharacterEllipsis"/>
+
+            <!-- Action buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsEnabled="{Binding StorageExplorer.HasSelection}">
+              <Button Content="📂 Reveal" ToolTip.Tip="Open in File Manager"
+                      Command="{Binding StorageExplorer.OpenFolderCommand}" Padding="8,4" FontSize="11"/>
+              <Button Content="💻 Terminal" ToolTip.Tip="Open terminal here"
+                      Command="{Binding StorageExplorer.OpenTerminalCommand}" Padding="8,4" FontSize="11"/>
+              <Button Content="📋 Copy Path" ToolTip.Tip="Copy path to clipboard"
+                      Command="{Binding StorageExplorer.CopyPathCommand}" Padding="8,4" FontSize="11"/>
+              <Button Content="🗑️ Trash" Classes="action-danger" ToolTip.Tip="Move to Trash"
+                      Command="{Binding StorageExplorer.MoveToTrashCommand}" Padding="8,4" FontSize="11"/>
+              <Button Content="🤖 Ask AI" ToolTip.Tip="Ask AI about this file"
+                      Classes="action-primary" Command="{Binding StorageExplorer.AskAiAboutSelectedCommand}" Padding="8,4" FontSize="11"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- VIEW 2: AI CLEANUP ASSISTANT -->
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding IsCleanupActive}" Padding="24,20">
+        <StackPanel Spacing="18">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="4">
+              <TextBlock Text="AI Cleanup Assistant" Classes="title"/>
+              <TextBlock Text="Safely identify and reclaim gigabytes of caches, orphaned packages, and dev artifacts." Classes="muted" FontSize="12"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="🔍 Scan Junk" Classes="action-primary" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
+              <Button Content="🧹 Clean Selected" Background="#E05252" Foreground="#FFFFFF" FontWeight="SemiBold"
+                      Command="{Binding Cleanup.CleanSelectedCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- Metric Cards -->
+          <Grid ColumnDefinitions="*,*,*">
+            <Border Classes="card">
+              <StackPanel Spacing="4">
+                <TextBlock Text="TOTAL DETECTED" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" FontSize="24" FontWeight="Bold" Foreground="#7BA7FF"/>
+                <TextBlock Text="Found across cache &amp; temp targets" Classes="muted" FontSize="11"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Margin="12,0">
+              <StackPanel Spacing="4">
+                <TextBlock Text="SELECTED TO CLEAN" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding Cleanup.SelectedReclaimableText}" FontSize="24" FontWeight="Bold" Foreground="#35D3A0"/>
+                <TextBlock Text="Will be safely reclaimed" Classes="muted" FontSize="11"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="card">
+              <StackPanel Spacing="4">
+                <TextBlock Text="STATUS" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding Cleanup.StatusMessage}" FontSize="13" TextWrapping="Wrap" Foreground="#FFFFFF"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <!-- Controls: Category filter & Select All / Deselect All -->
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Select All" Padding="10,5" FontSize="12" Command="{Binding Cleanup.SelectAllCommand}"/>
+              <Button Content="Deselect All" Padding="10,5" FontSize="12" Command="{Binding Cleanup.DeselectAllCommand}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Category:" Classes="muted" VerticalAlignment="Center" FontSize="12"/>
+              <Button Content="All" Padding="8,4" FontSize="11" Command="{Binding Cleanup.CleanSelectedCommand}"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- List of Reclaimable Items -->
+          <Border Classes="card">
+            <ItemsControl ItemsSource="{Binding Cleanup.FilteredItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="#0C1724" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                      <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                      <StackPanel Grid.Column="1" Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"/>
+                          <Border Background="{Binding BadgeColor}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding RiskLevel}" FontSize="10" FontWeight="Bold" Foreground="#0A141E"/>
+                          </Border>
+                          <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Description}" Classes="muted" FontSize="12"/>
+                        <TextBlock Text="{Binding Path}" Foreground="#6C7F93" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+
+                      <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Foreground="#35D3A0"
+                                 FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="16,0"/>
+
+                      <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Content="📂 Reveal" Padding="8,4" FontSize="11"
+                                Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Cleanup.OpenItemLocationCommand}"
+                                CommandParameter="{Binding}"/>
+                        <Button Content="🤖 Ask AI" Padding="8,4" FontSize="11" Classes="action-primary"
+                                Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Cleanup.AskAiAboutItemCommand}"
+                                CommandParameter="{Binding}"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- VIEW 3: OVERVIEW -->
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding IsOverviewActive}" Padding="30,24">
+        <StackPanel Spacing="22">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+              <TextBlock Text="Good {Binding Greeting}" Classes="muted"/>
+              <TextBlock Text="System Overview" Classes="title"/>
+              <TextBlock Text="Live hardware metrics and system health indicators." Classes="muted" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button Content="🔄 Refresh" Command="{Binding RefreshCommand}"/>
+          </Grid>
+
+          <!-- Gauge Cards -->
+          <Grid ColumnDefinitions="*,*,*">
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="MEMORY" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding MemoryHeadline}" FontSize="24" FontWeight="SemiBold"/>
+                <ProgressBar Value="{Binding MemoryPercent}" Maximum="100"/>
+                <TextBlock Text="{Binding MemoryDetail}" Classes="muted" FontSize="12"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Margin="14,0">
+              <StackPanel Spacing="10">
+                <TextBlock Text="STORAGE" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding StorageHeadline}" FontSize="24" FontWeight="SemiBold"/>
+                <ProgressBar Value="{Binding StoragePercent}" Maximum="100" Foreground="#7BA7FF"/>
+                <TextBlock Text="{Binding StorageDetail}" Classes="muted" FontSize="12"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="CPU LOAD" Classes="muted" FontSize="11"/>
+                <TextBlock Text="{Binding CpuHeadline}" FontSize="24" FontWeight="SemiBold"/>
+                <ProgressBar Value="{Binding CpuPercent}" Maximum="100" Foreground="#F6B75D"/>
+                <TextBlock Text="{Binding CpuDetail}" Classes="muted" FontSize="12"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <!-- Recommendations -->
+          <Border Classes="card">
+            <StackPanel Spacing="14">
+              <TextBlock Text="What Needs Attention" FontSize="16" FontWeight="SemiBold"/>
+              <ItemsControl ItemsSource="{Binding Recommendations}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="#0B1622" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                      <Grid ColumnDefinitions="6,*,Auto">
+                        <Border Background="{Binding Accent}" CornerRadius="3"/>
+                        <StackPanel Grid.Column="1" Spacing="2" Margin="12,0,0,0">
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding Impact}" Foreground="#A8C8FF" VerticalAlignment="Center"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Top Memory & Disks -->
+          <Grid ColumnDefinitions="*,*">
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Top Memory Users" FontSize="16" FontWeight="SemiBold"/>
+                <ItemsControl ItemsSource="{Binding TopProcesses}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                        <TextBlock Text="{Binding Name}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Memory}" Classes="muted"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Margin="14,0,0,0">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Storage Drives" FontSize="16" FontWeight="SemiBold"/>
+                <ItemsControl ItemsSource="{Binding DiskItems}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel Margin="0,4">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding Name}"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="muted"/>
+                        </Grid>
+                        <ProgressBar Value="{Binding Percent}" Maximum="100" Margin="0,5,0,0"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- VIEW 4: PERFORMANCE & PROCESSES -->
+      <Grid Grid.Row="1" IsVisible="{Binding IsPerformanceActive}" Margin="20" RowDefinitions="Auto,Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Performance &amp; Process Manager" Classes="title"/>
+            <TextBlock Text="{Binding Performance.StatusMessage}" Classes="muted" FontSize="12"/>
+          </StackPanel>
+          <Button Content="🔄 Refresh" Command="{Binding Performance.RefreshCommand}"/>
+        </Grid>
+
+        <!-- Metric bar + Search -->
+        <Border Grid.Row="1" Classes="card" Margin="0,0,0,12" Padding="12">
+          <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,16,0">
+              <TextBlock Text="CPU:" Classes="muted" FontSize="12"/>
+              <TextBlock Text="{Binding Performance.CpuText}" FontWeight="Bold" Foreground="#F6B75D"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,16,0">
+              <TextBlock Text="RAM:" Classes="muted" FontSize="12"/>
+              <TextBlock Text="{Binding Performance.MemoryHeadline}" FontWeight="Bold" Foreground="#35D3A0"/>
+            </StackPanel>
+            <TextBox Grid.Column="2" Text="{Binding Performance.SearchFilter}" Watermark="Filter processes by name or PID..." VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+            <Button Grid.Column="3" Content="🛑 End Task" Classes="action-danger"
+                    Command="{Binding Performance.TerminateProcessCommand}"
+                    IsEnabled="{Binding Performance.HasSelectedProcess}"/>
+          </Grid>
+        </Border>
+
+        <!-- Process List Table -->
+        <Border Grid.Row="2" Classes="card">
+          <Grid RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="80,*,120,Auto" Margin="8,0,8,8">
+              <TextBlock Text="PID" Classes="muted" FontSize="12"/>
+              <TextBlock Grid.Column="1" Text="Process Name" Classes="muted" FontSize="12"/>
+              <TextBlock Grid.Column="2" Text="Memory" Classes="muted" FontSize="12" HorizontalAlignment="Right"/>
+              <TextBlock Grid.Column="3" Text="Action" Classes="muted" FontSize="12" Margin="16,0,0,0"/>
+            </Grid>
+
+            <ListBox Grid.Row="1" ItemsSource="{Binding Performance.FilteredProcesses}"
+                     SelectedItem="{Binding Performance.SelectedProcess, Mode=TwoWay}">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="80,*,120,Auto" Margin="0,2">
+                    <TextBlock Text="{Binding Id}" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}"
+                               Foreground="#35D3A0" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- VIEW 5: SETTINGS -->
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding IsSettingsActive}" Padding="30,24">
+        <StackPanel Spacing="20" MaxWidth="720" HorizontalAlignment="Left">
+          <StackPanel Spacing="4">
+            <TextBlock Text="AI Agent &amp; Engine Settings" Classes="title"/>
+            <TextBlock Text="Configure cloud API credentials, model slugs, and deletion protections." Classes="muted" FontSize="12"/>
+          </StackPanel>
+
+          <Border Classes="card">
+            <StackPanel Spacing="16">
+              <TextBlock Text="Cloud AI Credentials" FontWeight="SemiBold" FontSize="15"/>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="OpenRouter API Key:" Classes="muted" FontSize="12"/>
+                <TextBox Text="{Binding Settings.OpenRouterKey}" PasswordChar="•" Watermark="sk-or-v1-..."/>
+                <TextBlock Text="Allows using models like google/gemma-4-31b-it:free or any open-weights model via OpenRouter." Classes="muted" FontSize="11"/>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="OpenAI API Key (Optional):" Classes="muted" FontSize="12"/>
+                <TextBox Text="{Binding Settings.OpenAiKey}" PasswordChar="•" Watermark="sk-..."/>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="AI Model Slug:" Classes="muted" FontSize="12"/>
+                <TextBox Text="{Binding Settings.SelectedModel}" Watermark="google/gemma-4-31b-it:free"/>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="Custom Endpoint (Optional):" Classes="muted" FontSize="12"/>
+                <TextBox Text="{Binding Settings.CustomEndpoint}" Watermark="https://openrouter.ai/api/v1/chat/completions"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="14">
+              <TextBlock Text="Safety Protections" FontWeight="SemiBold" FontSize="15"/>
+              <CheckBox IsChecked="{Binding Settings.SafeMode}" Content="Protect critical system directories (/, /usr, /bin, /etc, /boot)" IsEnabled="False"/>
+              <TextBlock Text="Safe mode prevents accidental deletion of essential operating system and user root directories." Classes="muted" FontSize="11"/>
+            </StackPanel>
+          </Border>
+
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Content="💾 Save Settings" Classes="action-primary" Command="{Binding Settings.SaveCommand}"/>
+            <Button Content="🔄 Reload from .env" Command="{Binding Settings.ReloadCommand}"/>
+            <TextBlock Text="{Binding Settings.StatusMessage}" Classes="muted" VerticalAlignment="Center" FontSize="12" Margin="12,0,0,0"/>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- RIGHT SIDEBAR: AI SYSTEM & STORAGE COPILOT -->
+    <Border Grid.Column="2" Background="#0B1521" BorderBrush="#142333" BorderThickness="1,0,0,0" Padding="18">
+      <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+          <StackPanel Spacing="2">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="AI System Copilot" FontWeight="Bold" FontSize="15" Foreground="#FFFFFF"/>
+              <Border Background="#16382F" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                <TextBlock Text="Active" Foreground="#35D3A0" FontSize="10" FontWeight="SemiBold"/>
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Ask about disk usage, large files, or cleanups" Classes="muted" FontSize="11"/>
+          </StackPanel>
+          <Button Grid.Column="1" Content="🗑️" ToolTip.Tip="Clear chat history"
+                  Command="{Binding ClearChatCommand}" Padding="6,4" FontSize="12"/>
+        </Grid>
+
+        <!-- Chat History -->
+        <ScrollViewer Grid.Row="1" Margin="0,4,0,14">
+          <ItemsControl ItemsSource="{Binding Messages}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{Binding Background}" CornerRadius="10" Padding="12,10"
+                        Margin="0,0,0,10" HorizontalAlignment="{Binding Alignment}" MaxWidth="330">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding Author}" FontSize="11" FontWeight="Bold" Foreground="#35D3A0"/>
+                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Foreground="#E2EDF8"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Bottom Controls: Quick prompts + Prompt Box + Send -->
+        <StackPanel Grid.Row="2" Spacing="8">
+          <!-- Thinking indicator -->
+          <StackPanel IsVisible="{Binding IsAiThinking}" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+            <ProgressBar IsIndeterminate="True" Width="80"/>
+            <TextBlock Text="AI is analyzing..." Classes="muted" FontSize="11"/>
+          </StackPanel>
+
+          <!-- Quick Action Prompts -->
+          <WrapPanel>
+            <Button Content="📊 Breakdown scan" Command="{Binding QuickAskCommand}"
+                    CommandParameter="What is taking up all my space? Break down the scan." Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
+            <Button Content="🧹 Safe cleanups" Command="{Binding QuickAskCommand}"
+                    CommandParameter="What can I safely clean up to free disk space?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
+            <Button Content="📦 node_modules?" Command="{Binding QuickAskCommand}"
+                    CommandParameter="What is node_modules, and can I delete it?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
+            <Button Content="⚡ Check RAM" Command="{Binding QuickAskCommand}"
+                    CommandParameter="Why is my RAM being used?" Margin="0,0,5,5" FontSize="11" Padding="8,4"/>
+          </WrapPanel>
+
+          <!-- Prompt Box -->
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding Prompt}" Watermark="Ask your AI storage advisor..."
+                     AcceptsReturn="True" MinHeight="44" MaxHeight="90" TextWrapping="Wrap"/>
+            <Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}"
+                    Classes="action-primary" Margin="8,0,0,0" VerticalAlignment="Stretch"/>
+          </Grid>
+          <TextBlock Text="Backed by OpenRouter/OpenAI API + Local Expert Storage Engine" Classes="muted" FontSize="10"/>
+        </StackPanel>
+      </Grid>
     </Border>
   </Grid>
 </Window>
