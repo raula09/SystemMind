@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 /// <summary>
 /// Host-side diagnostics exposed to the chat model through OpenAI-compatible function tools.
@@ -18,8 +18,8 @@ public sealed class DiagnosticToolService : IDisposable
 
     public IReadOnlyList<object> OpenAiTools { get; } =
     [
-        Function("scan_anomalies", "Run SystemMind's AnomalyScanner against Windows Event Viewer or the Linux system journal. Use this first for crashes, disk faults, GPU resets, OOMs, unexpected shutdowns, and hardware errors.", new { hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." } }),
-        Function("get_scanned_anomalies", "Read anomalies already found by SystemMind's AnomalyScanner without starting a new scan.", new { hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." } }),
+        Function("scan_anomalies", "Run DiagnoX's AnomalyScanner against Windows Event Viewer or the Linux system journal. Use this first for crashes, disk faults, GPU resets, OOMs, unexpected shutdowns, and hardware errors.", new { hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." } }),
+        Function("get_scanned_anomalies", "Read anomalies already found by DiagnoX's AnomalyScanner without starting a new scan.", new { hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." } }),
         Function("read_event_viewer", "Read recent Windows Event Viewer records. Available only on Windows. Use standard log names such as System, Application, or Setup.", new { log_name = new { type = "string", description = "Windows event log name; defaults to System." }, hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." }, max_events = new { type = "integer", description = "Maximum records to return, 1 to 100. Defaults to 40." } }),
         Function("read_journalctl", "Read Linux system-journal records with journalctl. Available only on Linux. Prefer priority warning or err for diagnosis.", new { hours = new { type = "integer", description = "Look-back window in hours, from 1 to 720. Defaults to 24." }, priority = new { type = "string", description = "journalctl priority: emerg, alert, crit, err, warning, notice, info, or debug. Defaults to warning." }, max_lines = new { type = "integer", description = "Maximum lines to return, 1 to 200. Defaults to 80." } }),
         Function("run_cmd", "Run a host-system diagnostic command and return stdout/stderr. Use it only when the dedicated scanner, Event Viewer, or journal tool cannot answer the hardware question. Commands run with the current user's permissions; do not use destructive, state-changing, or network-download commands unless the user explicitly asks for that action.", new { command = new { type = "string", description = "A shell command to run on the host." }, timeout_seconds = new { type = "integer", description = "Timeout from 1 to 30 seconds; defaults to 15." } })

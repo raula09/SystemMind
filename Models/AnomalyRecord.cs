@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SystemMind.Models;
+namespace DiagnoX.Models;
 
 public enum AnomalySeverity { Info, Warning, Critical }
 

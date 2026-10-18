@@ -3,9 +3,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 public sealed class TreemapControl : Control
 {

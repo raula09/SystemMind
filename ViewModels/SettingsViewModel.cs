@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using SystemMind.Services;
+using DiagnoX.Services;
 
-namespace SystemMind.ViewModels;
+namespace DiagnoX.ViewModels;
 
 public sealed class SettingsViewModel : INotifyPropertyChanged
 {

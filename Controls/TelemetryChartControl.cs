@@ -5,7 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 public sealed class TelemetryChartControl : Control
 {

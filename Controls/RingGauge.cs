@@ -5,7 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 /// <summary>
 /// Donut gauge with a centred value and a small caption beneath it.

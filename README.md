@@ -1,6 +1,6 @@
-# SystemMind — WinDirStat with an AI Agent
+# DiagnoX — WinDirStat with an AI Agent
 
-SystemMind is a native cross-platform disk usage analyzer and system manager built with C#/.NET 10 and Avalonia UI. It blends classic **WinDirStat** (interactive cushion treemap, directory hierarchy, extension statistics) with an **AI Agent Copilot** that understands your filesystem, identifies space hogs, and guides you through safe cleanups.
+DiagnoX is a native cross-platform disk usage analyzer and system manager built with C#/.NET 10 and Avalonia UI. It blends classic **WinDirStat** (interactive cushion treemap, directory hierarchy, extension statistics) with an **AI Agent Copilot** that understands your filesystem, identifies space hogs, and guides you through safe cleanups.
 
 ---
 
@@ -61,7 +61,7 @@ dotnet run
 
 ### Run the Automated Test Suite
 ```bash
-dotnet test SystemMind.Tests/SystemMind.Tests.csproj
+dotnet test DiagnoX.Tests/DiagnoX.Tests.csproj
 ```
 
 ### Enable Cloud AI (Optional)
@@ -70,7 +70,7 @@ To use OpenRouter, add your key to `.env` in the project root:
 OPENROUTER_API_KEY=sk-or-v1-...
 AI_MODEL=meta-llama/llama-3.3-70b:free
 ```
-Or configure keys directly in the in-app **Settings** tab. If no key is set or if rate limits are reached, SystemMind seamlessly switches to its built-in **Local Expert Storage Engine**.
+Or configure keys directly in the in-app **Settings** tab. If no key is set or if rate limits are reached, DiagnoX seamlessly switches to its built-in **Local Expert Storage Engine**.
 
 ---
 
@@ -83,4 +83,4 @@ Or configure keys directly in the in-app **Settings** tab. If no key is set or i
 - `Services/CleanupScannerService.cs`: Detects reclaimable caches, temporary files, old downloads, and build artifacts.
 - `Services/FileOperationsService.cs`: OS shell integration and safe path guardrails.
 - `ViewModels/`: `StorageExplorerViewModel`, `CleanupViewModel`, `PerformanceViewModel`, `SettingsViewModel`, `MainViewModel`.
-# SystemMind
+# DiagnoX

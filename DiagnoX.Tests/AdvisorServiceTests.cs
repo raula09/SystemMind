@@ -1,8 +1,8 @@
-using SystemMind.Models;
-using SystemMind.Services;
+using DiagnoX.Models;
+using DiagnoX.Services;
 using Xunit;
 
-namespace SystemMind.Tests;
+namespace DiagnoX.Tests;
 
 public class AdvisorServiceTests
 {

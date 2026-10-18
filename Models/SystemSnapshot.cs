@@ -1,4 +1,4 @@
-namespace SystemMind.Models;
+namespace DiagnoX.Models;
 
 public record SystemSnapshot(
     double MemoryUsedGb, double MemoryTotalGb, double DiskUsedGb, double DiskTotalGb,

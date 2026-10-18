@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public record ScanProgress(
     long ScannedFiles,

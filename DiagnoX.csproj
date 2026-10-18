@@ -8,9 +8,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="DriveTest.cs" />
-    <Compile Remove="SystemMind.Tests\**" />
-    <EmbeddedResource Remove="SystemMind.Tests\**" />
-    <None Remove="SystemMind.Tests\**" />
+    <Compile Remove="DiagnoX.Tests\**" />
+    <EmbeddedResource Remove="DiagnoX.Tests\**" />
+    <None Remove="DiagnoX.Tests\**" />
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Include="images/Logo.png" />

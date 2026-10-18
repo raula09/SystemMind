@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 /// <summary>Three animated dots used while the assistant is waiting for a response.</summary>
 public sealed class ThinkingIndicator : Control

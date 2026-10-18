@@ -9,10 +9,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using SystemMind.Controls;
-using SystemMind.ViewModels;
+using DiagnoX.Controls;
+using DiagnoX.ViewModels;
 
-namespace SystemMind;
+namespace DiagnoX;
 
 public sealed record DetailRow(string Label, string Value);
 
@@ -55,9 +55,6 @@ public partial class MainWindow : Window
         Closed += (_, _) => (DataContext as MainViewModel)?.StopMonitoring();
     }
 
-    // =====================================================================
-    //  Card click / drawer open-close
-    // =====================================================================
 
     private void DashboardCard_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -109,10 +106,6 @@ public partial class MainWindow : Window
             CloseDrawer();
         }
     }
-
-    // =====================================================================
-    //  Drawer content
-    // =====================================================================
 
     private void ShowDetail(string tag)
     {
@@ -252,9 +245,6 @@ public partial class MainWindow : Window
         _drawer.IsVisible = true;
     }
 
-    // =====================================================================
-    //  Reflection / formatting helpers
-    // =====================================================================
 
     private static object? Raw(object? obj, string name) =>
         obj?.GetType().GetProperty(name)?.GetValue(obj);

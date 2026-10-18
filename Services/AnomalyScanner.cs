@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Runtime.Versioning;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 /// <summary>Collects high-signal Windows Event Log or Linux system-journal reliability events.</summary>
 public sealed class AnomalyScanner

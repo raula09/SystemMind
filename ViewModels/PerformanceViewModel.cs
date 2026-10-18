@@ -2,10 +2,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using SystemMind.Models;
-using SystemMind.Services;
+using DiagnoX.Models;
+using DiagnoX.Services;
 
-namespace SystemMind.ViewModels;
+namespace DiagnoX.ViewModels;
 
 public sealed class PerformanceViewModel : INotifyPropertyChanged
 {

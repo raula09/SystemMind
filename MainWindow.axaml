@@ -1,17 +1,17 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:SystemMind.ViewModels"
-        xmlns:models="using:SystemMind.Models"
-        xmlns:controls="using:SystemMind.Controls"
-        x:Class="SystemMind.MainWindow"
+        xmlns:vm="using:DiagnoX.ViewModels"
+        xmlns:models="using:DiagnoX.Models"
+        xmlns:controls="using:DiagnoX.Controls"
+        x:Class="DiagnoX.MainWindow"
         x:DataType="vm:MainViewModel"
         Width="1480" Height="920" MinWidth="1240" MinHeight="750"
         Background="#14171B"
         Foreground="#E6E8EB"
         FontFamily="avares://Avalonia.Fonts.Inter/Assets#Inter"
         FontSize="12"
-        Title="SystemMind"
-        Icon="avares://SystemMind/images/Logo.png">
+        Title="DiagnoX"
+        Icon="avares://DiagnoX/images/Logo.png">
 
   <Window.Styles>
     <!--
@@ -237,7 +237,6 @@
       <Setter Property="BorderBrush" Value="#00AEEF"/>
     </Style>
 
-    <!-- ============ BUTTONS ============ -->
     <Style Selector="Button">
       <Setter Property="Background" Value="#262B32"/>
       <Setter Property="BorderBrush" Value="#323841"/>
@@ -308,7 +307,6 @@
       <Setter Property="BorderBrush" Value="#3A6BA8"/>
     </Style>
 
-    <!-- Sidebar navigation: photo-inspired ink, slate, and cyan palette. -->
     <Style Selector="Button.nav">
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -374,7 +372,6 @@
       <Setter Property="Foreground" Value="#FFFFFF"/>
     </Style>
 
-    <!-- ============ INPUTS ============ -->
     <Style Selector="TextBox">
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Background" Value="#171A1E"/>
@@ -420,7 +417,6 @@
 
     <Style Selector="CheckBox"><Setter Property="Foreground" Value="#DADEE3"/></Style>
 
-    <!-- ============ DATA ============ -->
     <Style Selector="ProgressBar">
       <Setter Property="Height" Value="4"/>
       <Setter Property="MinHeight" Value="0"/>
@@ -454,19 +450,16 @@
       <ColumnDefinition Width="420" MinWidth="300" MaxWidth="600"/>
     </Grid.ColumnDefinitions>
 
-    <!-- ===================== SIDEBAR ===================== -->
     <Border Classes="sidebar-shell" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="0,0,1,0" Padding="10,14,10,12">
       <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- Brand -->
         <StackPanel Orientation="Horizontal" Spacing="9" Margin="8,2,0,20">
           <Border Width="28" Height="22" CornerRadius="5" ClipToBounds="True" Background="#0D2430">
-            <Image Source="avares://SystemMind/images/Logo.png" Stretch="Uniform"/>
+            <Image Source="avares://DiagnoX/images/Logo.png" Stretch="Uniform"/>
           </Border>
-          <TextBlock Text="SystemMind" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="DiagnoX" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Navigation -->
         <StackPanel Grid.Row="1" Spacing="2">
           <TextBlock Text="Monitoring" Classes="eyebrow" FontSize="13" Margin="14,0,0,10"/>
 
@@ -1292,7 +1285,7 @@
                         CornerRadius="4" Padding="12,9" Margin="0,0,0,8" HorizontalAlignment="Left">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <controls:ThinkingIndicator Width="42" Height="18" IsActive="{Binding IsAiThinking}"/>
-                    <TextBlock Text="SystemMind is thinking" Classes="muted" FontSize="11.5" VerticalAlignment="Center"/>
+                    <TextBlock Text="DiagnoX is thinking" Classes="muted" FontSize="11.5" VerticalAlignment="Center"/>
                   </StackPanel>
                 </Border>
               </StackPanel>

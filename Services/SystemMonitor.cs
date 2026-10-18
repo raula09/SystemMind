@@ -4,9 +4,9 @@ using Microsoft.Win32;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public sealed class SystemMonitor
 {

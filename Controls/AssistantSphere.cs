@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 /// <summary>
 /// Animated particle sphere used as the assistant's presence indicator.

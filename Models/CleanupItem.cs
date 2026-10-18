@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SystemMind.Models;
+namespace DiagnoX.Models;
 
 public sealed class CleanupItem : INotifyPropertyChanged
 {

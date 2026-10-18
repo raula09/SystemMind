@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-namespace SystemMind.Controls;
+namespace DiagnoX.Controls;
 
 /// <summary>
 /// Animated glowing border for the assistant prompt box.

@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using SystemMind.ViewModels;
+using DiagnoX.ViewModels;
 
-namespace SystemMind;
+namespace DiagnoX;
 
 public partial class App : Application
 {

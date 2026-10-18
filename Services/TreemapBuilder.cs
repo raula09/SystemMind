@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public sealed class TreemapBuilder
 {

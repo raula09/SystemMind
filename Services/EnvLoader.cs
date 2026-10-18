@@ -1,4 +1,4 @@
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public static class EnvLoader
 {

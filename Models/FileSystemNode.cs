@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SystemMind.Models;
+namespace DiagnoX.Models;
 
 public sealed class FileSystemNode : INotifyPropertyChanged
 {

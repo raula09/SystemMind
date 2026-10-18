@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace SystemMind;
+namespace DiagnoX;
 
 internal static class Program
 {

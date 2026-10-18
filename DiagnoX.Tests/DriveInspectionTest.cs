@@ -2,7 +2,7 @@ using System.IO;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SystemMind.Tests;
+namespace DiagnoX.Tests;
 
 public class DriveInspectionTest(ITestOutputHelper output)
 {

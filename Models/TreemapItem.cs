@@ -1,4 +1,4 @@
-namespace SystemMind.Models;
+namespace DiagnoX.Models;
 
 public sealed class TreemapItem
 {

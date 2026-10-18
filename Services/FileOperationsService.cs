@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public sealed class FileOperationsService
 {

@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
-using SystemMind.Services;
+using DiagnoX.Services;
 using Xunit;
 
-namespace SystemMind.Tests;
+namespace DiagnoX.Tests;
 
 public class FileOperationsServiceTests
 {
@@ -29,7 +29,7 @@ public class FileOperationsServiceTests
     public void IsProtected_AllowsSafeSubdirectories()
     {
         var ops = new FileOperationsService();
-        var tempFolder = Path.Combine(Path.GetTempPath(), "SystemMind_TestSafeDelete");
+        var tempFolder = Path.Combine(Path.GetTempPath(), "DiagnoX_TestSafeDelete");
         Assert.False(ops.IsProtected(tempFolder));
     }
 }

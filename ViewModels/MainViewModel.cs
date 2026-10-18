@@ -4,10 +4,10 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
-using SystemMind.Models;
-using SystemMind.Services;
+using DiagnoX.Models;
+using DiagnoX.Services;
 
-namespace SystemMind.ViewModels;
+namespace DiagnoX.ViewModels;
 
 public sealed class MainViewModel : INotifyPropertyChanged
 {
@@ -214,7 +214,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _ = StorageExplorer.StartScanAsync();
 
         // Messages.Add(new ChatMessage(
-        //     "SystemMind",
+        //     "DiagnoX",
         //     "👋 Welcome! I'm your AI System & Storage Advisor.\n\n" +
         //     "• **Storage Explorer**: Scanning your entire root filesystem (`/`) to show every file and folder in a full WinDirStat-style treemap.\n" +
         //     "• **Cleanup Assistant**: Detects caches, junk files, and large dev artifacts.\n" +
@@ -474,13 +474,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 StorageExplorer.TotalFilesScanned,
                 StorageExplorer.TotalBytesScanned);
 
-            var aiMessage = new ChatMessage("SystemMind", answer, "#101B22", HorizontalAlignment.Left, animate: true);
+            var aiMessage = new ChatMessage("DiagnoX", answer, "#101B22", HorizontalAlignment.Left, animate: true);
             Messages.Add(aiMessage);
             _ = aiMessage.AnimateAsync();
         }
         catch (Exception ex)
         {
-            Messages.Add(new ChatMessage("SystemMind", $"Error: {ex.Message}", "#381B1B", HorizontalAlignment.Left));
+            Messages.Add(new ChatMessage("DiagnoX", $"Error: {ex.Message}", "#381B1B", HorizontalAlignment.Left));
         }
         finally
         {
@@ -544,7 +544,7 @@ public sealed class ChatMessage : INotifyPropertyChanged
 
     public async Task AnimateAsync()
     {
-        if (string.IsNullOrEmpty(Text) || Author != "SystemMind")
+        if (string.IsNullOrEmpty(Text) || Author != "DiagnoX")
         {
             DisplayText = Text;
             return;

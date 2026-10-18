@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
-using SystemMind.Models;
+using DiagnoX.Models;
 
-namespace SystemMind.Services;
+namespace DiagnoX.Services;
 
 public sealed class AnomalyDatabase : IDisposable
 {
@@ -9,7 +9,7 @@ public sealed class AnomalyDatabase : IDisposable
 
     public AnomalyDatabase()
     {
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SystemMind");
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DiagnoX");
         Directory.CreateDirectory(folder);
         _connection = new SqliteConnection($"Data Source={Path.Combine(folder, "anomalies.db")}");
         _connection.Open();

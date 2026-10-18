@@ -1,8 +1,8 @@
-using SystemMind.Models;
-using SystemMind.Services;
+using DiagnoX.Models;
+using DiagnoX.Services;
 using Xunit;
 
-namespace SystemMind.Tests;
+namespace DiagnoX.Tests;
 
 public class DirectoryScannerTests : IDisposable
 {
@@ -10,7 +10,7 @@ public class DirectoryScannerTests : IDisposable
 
     public DirectoryScannerTests()
     {
-        _testDir = Path.Combine(Path.GetTempPath(), "SystemMind_ScannerTest_" + Guid.NewGuid());
+        _testDir = Path.Combine(Path.GetTempPath(), "DiagnoX_ScannerTest_" + Guid.NewGuid());
         Directory.CreateDirectory(_testDir);
 
         // Create subdirectories and sample files with known content

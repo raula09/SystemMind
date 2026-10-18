@@ -1,9 +1,9 @@
-using SystemMind.Models;
-using SystemMind.Services;
-using SystemMind.ViewModels;
+using DiagnoX.Models;
+using DiagnoX.Services;
+using DiagnoX.ViewModels;
 using Xunit;
 
-namespace SystemMind.Tests;
+namespace DiagnoX.Tests;
 
 public class CleanupAndPerformanceTests
 {

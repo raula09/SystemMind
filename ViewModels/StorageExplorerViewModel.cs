@@ -5,10 +5,10 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using SystemMind.Models;
-using SystemMind.Services;
+using DiagnoX.Models;
+using DiagnoX.Services;
 
-namespace SystemMind.ViewModels;
+namespace DiagnoX.ViewModels;
 
 public sealed class StorageExplorerViewModel : INotifyPropertyChanged
 {
