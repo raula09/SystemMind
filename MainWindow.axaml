@@ -101,6 +101,141 @@
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="8"/>
     </Style>
+    <!-- Storage uses the denser, square-edged system monitor treatment. -->
+    <Style Selector="Border.storage-surface">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Border.storage-toolbar">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.storage-action">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="14,8"/>
+    </Style>
+    <Style Selector="Button.storage-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
+    <Style Selector="Button.storage-chip">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="FontSize" Value="10.5"/>
+      <Setter Property="Foreground" Value="#A9B7C2"/>
+    </Style>
+    <Style Selector="TextBox.storage-path">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <Style Selector="Border.storage-drive">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.storage-drive">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="10"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.storage-drive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+    </Style>
+    <Style Selector="Border.process-surface">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.process-action">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="14,8"/>
+    </Style>
+    <Style Selector="Button.process-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
+    <Style Selector="TextBox.process-search">
+      <Setter Property="Background" Value="#0A1014"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <Style Selector="ListBox.process-list">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ListBox.process-list > ListBoxItem">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="ListBox.process-list > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+    </Style>
+    <Style Selector="Border.health-surface">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.health-action">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="14,8"/>
+    </Style>
+    <Style Selector="Button.health-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
+    <Style Selector="TextBox.health-filter, ComboBox.health-filter">
+      <Setter Property="Background" Value="#0A1014"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Border.health-category">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Border.cleanup-surface">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Border.cleanup-row">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="#25313A"/>
+      <Setter Property="BorderThickness" Value="0,1,0,0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.cleanup-action">
+      <Setter Property="Background" Value="#0D1318"/>
+      <Setter Property="BorderBrush" Value="#2B3B45"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="14,8"/>
+    </Style>
+    <Style Selector="Button.cleanup-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#10212A"/>
+      <Setter Property="BorderBrush" Value="#00AEEF"/>
+    </Style>
 
     <!-- ============ BUTTONS ============ -->
     <Style Selector="Button">
@@ -181,8 +316,8 @@
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Foreground" Value="#A9B7C2"/>
       <Setter Property="CornerRadius" Value="0"/>
-      <Setter Property="Padding" Value="10,6"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Padding" Value="14,11"/>
+      <Setter Property="FontSize" Value="16"/>
     </Style>
     <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="#111A20"/>
@@ -197,8 +332,8 @@
       <Setter Property="Foreground" Value="#FFFFFF"/>
       <Setter Property="FontWeight" Value="Medium"/>
       <Setter Property="CornerRadius" Value="0"/>
-      <Setter Property="Padding" Value="8,6"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Padding" Value="12,11"/>
+      <Setter Property="FontSize" Value="16"/>
     </Style>
     <Style Selector="Button.nav-active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="#121A20"/>
@@ -275,6 +410,13 @@
       <Setter Property="Background" Value="#10212A"/>
       <Setter Property="BorderBrush" Value="#00AEEF"/>
     </Style>
+    <Style Selector="GridSplitter.pane-resizer">
+      <Setter Property="Background" Value="#1D2A33"/>
+      <Setter Property="Cursor" Value="SizeWestEast"/>
+    </Style>
+    <Style Selector="GridSplitter.pane-resizer:pointerover">
+      <Setter Property="Background" Value="#00AEEF"/>
+    </Style>
 
     <Style Selector="CheckBox"><Setter Property="Foreground" Value="#DADEE3"/></Style>
 
@@ -302,8 +444,15 @@
     <Style Selector="ScrollViewer"><Setter Property="AllowAutoHide" Value="True"/></Style>
   </Window.Styles>
 
-  <!-- ROOT: navigation | workspace | assistant rail -->
-  <Grid ColumnDefinitions="232,*,420">
+  <!-- ROOT: navigation | resizer | workspace | resizer | assistant rail -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="280" MinWidth="220" MaxWidth="420"/>
+      <ColumnDefinition Width="6"/>
+      <ColumnDefinition Width="*" MinWidth="500"/>
+      <ColumnDefinition Width="6"/>
+      <ColumnDefinition Width="420" MinWidth="300" MaxWidth="600"/>
+    </Grid.ColumnDefinitions>
 
     <!-- ===================== SIDEBAR ===================== -->
     <Border Classes="sidebar-shell" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="0,0,1,0" Padding="10,14,10,12">
@@ -314,17 +463,17 @@
           <Border Width="28" Height="22" CornerRadius="5" ClipToBounds="True" Background="#0D2430">
             <Image Source="avares://SystemMind/images/Logo.png" Stretch="Uniform"/>
           </Border>
-          <TextBlock Text="SystemMind" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="SystemMind" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
         </StackPanel>
 
         <!-- Navigation -->
         <StackPanel Grid.Row="1" Spacing="2">
-          <TextBlock Text="Monitoring" Classes="eyebrow" Margin="10,0,0,6"/>
+          <TextBlock Text="Monitoring" Classes="eyebrow" FontSize="13" Margin="14,0,0,10"/>
 
           <Button Classes.nav-active="{Binding IsOverviewActive}" Classes.nav="{Binding !IsOverviewActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="Overview">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+              <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
                     Stroke="#00AEEF" Data="M2,2 H6.5 V6.5 H2 Z M8.5,2 H13 V6.5 H8.5 Z M2,8.5 H6.5 V13 H2 Z M8.5,8.5 H13 V13 H8.5 Z"/>
               <TextBlock Text="Dashboard" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
@@ -333,7 +482,7 @@
           <Button Classes.nav-active="{Binding IsStorageExplorerActive}" Classes.nav="{Binding !IsStorageExplorerActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="StorageExplorer">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+              <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
                     Stroke="#3FCF6B" Data="M1.5,4 H5.5 L7,5.5 H13 V12 H1.5 Z"/>
               <TextBlock Text="Storage" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
@@ -342,7 +491,7 @@
           <Button Classes.nav-active="{Binding IsPerformanceActive}" Classes.nav="{Binding !IsPerformanceActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="Performance">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+              <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
                     Stroke="#F2994A" Data="M2,3.5 H13 M2,7.5 H13 M2,11.5 H8.5"/>
               <TextBlock Text="Processes" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
@@ -351,18 +500,18 @@
           <Button Classes.nav-active="{Binding IsAnomaliesActive}" Classes.nav="{Binding !IsAnomaliesActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="Anomalies">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round"
+              <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.3" StrokeLineCap="Round"
                     Stroke="#F0525F" Data="M7,1 L13,12.5 H1 Z M7,5 V8.5 M7,10.7 V10.8"/>
               <TextBlock Text="System Health" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
           </Button>
 
-          <TextBlock Text="Tools" Classes="eyebrow" Margin="10,18,0,6"/>
+          <TextBlock Text="Tools" Classes="eyebrow" FontSize="13" Margin="14,18,0,10"/>
 
           <Button Classes.nav-active="{Binding IsCleanupActive}" Classes.nav="{Binding !IsCleanupActive}"
                   Command="{Binding SetViewCommand}" CommandParameter="Cleanup">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+              <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
                     Stroke="#F5C84C" Data="M2.5,4 H12.5 M5.5,4 V2.2 H9.5 V4 M3.7,4 L4.3,12.5 H10.7 L11.3,4"/>
               <TextBlock Text="Cleanup" Foreground="{Binding $parent[Button].Foreground}"/>
             </StackPanel>
@@ -373,8 +522,11 @@
       </Grid>
     </Border>
 
+    <GridSplitter Grid.Column="1" Classes="pane-resizer" ResizeDirection="Columns"
+                  ResizeBehavior="PreviousAndNext" ShowsPreview="False"/>
+
     <!-- ===================== WORKSPACE ===================== -->
-    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+    <Grid Grid.Column="2" Background="#080C0F" RowDefinitions="Auto,*">
 
       <!-- Status banner -->
       <Border IsVisible="{Binding HasStatusBanner}" Background="#1A2634" BorderBrush="#3A6BA8" BorderThickness="1"
@@ -613,27 +765,26 @@
         </ScrollViewer>
 
         <!-- ============ VIEW: STORAGE EXPLORER ============ -->
-        <Grid IsVisible="{Binding IsStorageExplorerActive}" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*,Auto,1.3*,Auto">
+        <Grid IsVisible="{Binding IsStorageExplorerActive}" Background="#080C0F" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*,Auto,1.3*,Auto">
 
           <!-- Scan bar -->
-          <Border Classes="panel" Padding="12" Margin="0,0,0,10">
+          <Border Classes="storage-toolbar" Padding="0" Margin="0,0,0,10">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                <TextBox Text="{Binding StorageExplorer.ScanPath}" Watermark="Folder to scan, e.g. /home/user or /" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                <Button Grid.Column="1" Content="Browse…" Command="{Binding StorageExplorer.BrowseFolderCommand}" Margin="0,0,8,0"/>
-                <Button Grid.Column="2" Content="Scan" Classes="primary" Padding="20,7"
+                <TextBox Classes="storage-path" Text="{Binding StorageExplorer.ScanPath}" Watermark="Folder to scan, e.g. /home/user or /" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Classes="storage-action" Command="{Binding StorageExplorer.BrowseFolderCommand}" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="Scan" Classes="primary storage-action" Padding="20,7"
                         Command="{Binding StorageExplorer.ScanCommand}" IsEnabled="{Binding StorageExplorer.CanScan}" Margin="0,0,8,0"/>
-                <Button Grid.Column="3" Content="Cancel" Classes="danger"
+                <Button Grid.Column="3" Content="Cancel" Classes="storage-action"
                         Command="{Binding StorageExplorer.CancelCommand}" IsEnabled="{Binding StorageExplorer.IsScanning}"/>
               </Grid>
               <Grid ColumnDefinitions="Auto,*">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                  <TextBlock Text="Quick" Classes="eyebrow" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                  <Button Content="/" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/"/>
-                  <Button Content="~" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~"/>
-                  <Button Content="Downloads" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Downloads"/>
-                  <Button Content="/var" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/var"/>
-                  <Button Content="/usr" Classes="chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/usr"/>
+                  <Button Content="/" Classes="storage-chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/"/>
+                  <Button Content="~" Classes="storage-chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~"/>
+                  <Button Content="Downloads" Classes="storage-chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="~/Downloads"/>
+                  <Button Content="/var" Classes="storage-chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/var"/>
+                  <Button Content="/usr" Classes="storage-chip" Command="{Binding StorageExplorer.SetQuickPathCommand}" CommandParameter="/usr"/>
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding StorageExplorer.StatusMessage}" Classes="muted" FontSize="12"
                            HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
@@ -642,17 +793,18 @@
           </Border>
 
           <!-- Drives -->
-          <Border Grid.Row="1" Classes="panel" Padding="12" Margin="0,0,0,10">
+          <Border Grid.Row="1" Classes="storage-surface" Padding="10" Margin="0,0,0,10">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Drives" Classes="cardtitle" VerticalAlignment="Center"/>
-                <Button Grid.Column="1" Content="Refresh" Classes="sm" Command="{Binding StorageExplorer.RefreshDrivesCommand}"/>
+                <TextBlock Text="VOLUMES" Classes="eyebrow" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Refresh" Classes="sm storage-action" Command="{Binding StorageExplorer.RefreshDrivesCommand}"/>
               </Grid>
               <ItemsControl ItemsSource="{Binding StorageExplorer.AvailableDrives}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <Button Classes="tile" Margin="0,0,8,6"
+                    <Border Classes="storage-drive" Margin="0,0,8,0">
+                    <Button Classes="storage-drive"
                             Command="{Binding $parent[Window].DataContext.StorageExplorer.SelectDriveCommand}"
                             CommandParameter="{Binding}">
                       <StackPanel Width="210" Spacing="8">
@@ -670,6 +822,7 @@
                         </Grid>
                       </StackPanel>
                     </Button>
+                    </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
@@ -677,11 +830,11 @@
           </Border>
 
           <!-- Tree + extensions -->
-          <Grid Grid.Row="2" ColumnDefinitions="1.3*,12,*">
-            <Border Classes="panel" Padding="14,12">
+          <Grid Grid.Row="2" ColumnDefinitions="*,12,*">
+            <Border Classes="storage-surface" Padding="14,12">
               <Grid RowDefinitions="Auto,*">
                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,10,8">
-                  <TextBlock Text="Folders / Files" Classes="eyebrow"/>
+                  <TextBlock Text="FOLDERS · SIZE SHARE" Classes="eyebrow"/>
                   <TextBlock Grid.Column="1" Text="Size" Classes="eyebrow" Margin="0,0,22,0"/>
                   <TextBlock Grid.Column="2" Text="Share" Classes="eyebrow"/>
                 </Grid>
@@ -704,10 +857,10 @@
 
             <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
 
-            <Border Grid.Column="2" Classes="panel" Padding="14,12">
+            <Border Grid.Column="2" Classes="storage-surface" Padding="14,12">
               <Grid RowDefinitions="Auto,*">
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,6,8">
-                  <TextBlock Text="Type" Classes="eyebrow"/>
+                  <TextBlock Text="FILE TYPES" Classes="eyebrow"/>
                   <TextBlock Grid.Column="1" Text="Category" Classes="eyebrow" Margin="42,0,0,0"/>
                   <TextBlock Grid.Column="2" Text="Size" Classes="eyebrow" Margin="0,0,16,0"/>
                   <TextBlock Grid.Column="3" Text="Share" Classes="eyebrow"/>
@@ -736,7 +889,7 @@
           <GridSplitter Grid.Row="3" Height="10" Background="Transparent" ResizeDirection="Rows"/>
 
           <!-- Disk map -->
-          <Border Grid.Row="4" Classes="panel" Padding="0" ClipToBounds="True">
+          <Border Grid.Row="4" Classes="storage-surface" Padding="0" ClipToBounds="True">
             <Grid RowDefinitions="Auto,*">
               <Grid Margin="16,12,16,10" ColumnDefinitions="*,Auto">
                 <StackPanel Orientation="Horizontal" Spacing="12">
@@ -753,7 +906,7 @@
           </Border>
 
           <!-- Inspector -->
-          <Border Grid.Row="5" Classes="panel" Padding="14,9" Margin="0,10,0,0">
+          <Border Grid.Row="5" Classes="storage-surface" Padding="14,9" Margin="0,10,0,0">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Text="{Binding StorageExplorer.HoveredInfoText}" VerticalAlignment="Center" FontSize="12"
                          Foreground="#C4CAD1" TextTrimming="CharacterEllipsis"/>
@@ -769,71 +922,71 @@
         </Grid>
 
         <!-- ============ VIEW: CLEANUP ============ -->
-        <ScrollViewer IsVisible="{Binding IsCleanupActive}" Padding="24,18">
-          <StackPanel Spacing="16">
+        <ScrollViewer IsVisible="{Binding IsCleanupActive}" Background="#080C0F" Padding="28,22">
+          <StackPanel Spacing="14">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="4">
                 <TextBlock Text="Cleanup" Classes="h1"/>
                 <TextBlock Text="Find caches, orphaned packages and build artifacts you can safely reclaim." Classes="muted" FontSize="12"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button Content="Scan" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}" Padding="18,7"/>
-                <Button Content="Clean selected" Classes="primary" Command="{Binding Cleanup.CleanSelectedCommand}" IsEnabled="{Binding Cleanup.CanOperate}" Padding="16,7"/>
+                <Button Content="Scan" Classes="cleanup-action" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
+                <Button Content="Clean selected" Classes="primary cleanup-action" Command="{Binding Cleanup.CleanSelectedCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
               </StackPanel>
             </Grid>
 
             <Grid ColumnDefinitions="*,12,*,12,*">
-              <Border Classes="panel">
+              <Border Classes="cleanup-surface" Padding="14">
                 <StackPanel Spacing="6">
-                  <TextBlock Text="Detected" Classes="eyebrow"/>
-                  <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" Classes="big" Foreground="#4D96F0"/>
+                  <TextBlock Text="DETECTED" Classes="eyebrow"/>
+                  <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" Classes="big" Foreground="#00AEEF"/>
                   <TextBlock Text="Across cache and temp targets" Classes="muted" FontSize="11"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Column="2" Classes="panel">
+              <Border Grid.Column="2" Classes="cleanup-surface" Padding="14">
                 <StackPanel Spacing="6">
-                  <TextBlock Text="Selected" Classes="eyebrow"/>
-                  <TextBlock Text="{Binding Cleanup.SelectedReclaimableText}" Classes="big" Foreground="#3FCF6B"/>
+                  <TextBlock Text="SELECTED" Classes="eyebrow"/>
+                  <TextBlock Text="{Binding Cleanup.SelectedReclaimableText}" Classes="big" Foreground="#45D6A1"/>
                   <TextBlock Text="Will be reclaimed" Classes="muted" FontSize="11"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Column="4" Classes="panel">
+              <Border Grid.Column="4" Classes="cleanup-surface" Padding="14">
                 <StackPanel Spacing="6">
-                  <TextBlock Text="Status" Classes="eyebrow"/>
+                  <TextBlock Text="STATUS" Classes="eyebrow"/>
                   <TextBlock Text="{Binding Cleanup.StatusMessage}" FontSize="12.5" TextWrapping="Wrap" LineHeight="18"/>
                 </StackPanel>
               </Border>
             </Grid>
 
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="Select all" Classes="sm" Command="{Binding Cleanup.SelectAllCommand}"/>
-              <Button Content="Deselect all" Classes="sm" Command="{Binding Cleanup.DeselectAllCommand}"/>
+              <Button Content="Select all" Classes="sm cleanup-action" Command="{Binding Cleanup.SelectAllCommand}"/>
+              <Button Content="Deselect all" Classes="sm cleanup-action" Command="{Binding Cleanup.DeselectAllCommand}"/>
             </StackPanel>
 
-            <Border Classes="panel" Padding="10">
+            <Border Classes="cleanup-surface" Padding="0">
               <ItemsControl ItemsSource="{Binding Cleanup.FilteredItems}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <Border Classes="inset" Padding="14,12" Margin="0,0,0,8">
+                    <Border Classes="cleanup-row" Padding="16,12">
                       <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                         <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <StackPanel Grid.Column="1" Spacing="4">
                           <StackPanel Orientation="Horizontal" Spacing="9">
                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
-                            <Border Background="{Binding BadgeColor}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding RiskLevel}" FontSize="9.5" FontWeight="Bold" Foreground="#14171B"/>
+                            <Border Background="Transparent" BorderBrush="{Binding BadgeColor}" BorderThickness="1" CornerRadius="0" Padding="6,1" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding RiskLevel}" FontSize="9.5" FontWeight="Bold" Foreground="{Binding BadgeColor}"/>
                             </Border>
                             <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" VerticalAlignment="Center"/>
                           </StackPanel>
                           <TextBlock Text="{Binding Description}" Classes="muted" FontSize="11.5" TextWrapping="Wrap"/>
                           <TextBlock Text="{Binding Path}" Classes="dim num" FontSize="10.5" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Classes="num" Foreground="#3FCF6B" FontSize="15" FontWeight="Medium"
+                        <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" Classes="num" Foreground="#45D6A1" FontSize="15" FontWeight="Medium"
                                    VerticalAlignment="Center" Margin="18,0"/>
                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                          <Button Content="Reveal" Classes="sm"
+                          <Button Content="Reveal" Classes="sm cleanup-action"
                                   Command="{Binding $parent[Window].DataContext.Cleanup.OpenItemLocationCommand}" CommandParameter="{Binding}"/>
-                          <Button Content="Ask assistant" Classes="sm"
+                          <Button Content="Ask assistant" Classes="sm cleanup-action"
                                   Command="{Binding $parent[Window].DataContext.Cleanup.AskAiAboutItemCommand}" CommandParameter="{Binding}"/>
                         </StackPanel>
                       </Grid>
@@ -846,48 +999,50 @@
         </ScrollViewer>
 
         <!-- ============ VIEW: PROCESSES ============ -->
-        <Grid IsVisible="{Binding IsPerformanceActive}" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*">
+        <Grid IsVisible="{Binding IsPerformanceActive}" Background="#080C0F" Margin="20,16,20,14" RowDefinitions="Auto,Auto,*">
           <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
             <StackPanel Spacing="3">
               <TextBlock Text="Processes" Classes="h1"/>
               <TextBlock Text="{Binding Performance.StatusMessage}" Classes="muted" FontSize="12"/>
             </StackPanel>
-            <Button Grid.Column="1" Classes="iconbtn" Content="Refresh" Command="{Binding Performance.RefreshCommand}" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Classes="process-action" Content="Refresh" Command="{Binding Performance.RefreshCommand}" VerticalAlignment="Center"/>
           </Grid>
 
-          <Border Grid.Row="1" Classes="panel" Padding="12" Margin="0,0,0,12">
+          <Border Grid.Row="1" Classes="process-surface" Padding="12" Margin="0,0,0,12">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto">
               <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="4,0,22,0">
                 <TextBlock Text="CPU" Classes="eyebrow" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Performance.CpuText}" Classes="num" FontWeight="SemiBold" Foreground="#4D96F0"/>
+                <TextBlock Text="{Binding Performance.CpuText}" Classes="num" FontWeight="SemiBold" Foreground="#00AEEF"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,22,0">
                 <TextBlock Text="RAM" Classes="eyebrow" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Performance.MemoryHeadline}" Classes="num" FontWeight="SemiBold" Foreground="#F2994A"/>
+                <TextBlock Text="{Binding Performance.MemoryHeadline}" Classes="num" FontWeight="SemiBold" Foreground="#FFB23F"/>
               </StackPanel>
-              <TextBox Grid.Column="2" Text="{Binding Performance.SearchFilter}" Watermark="Filter by name or PID…" VerticalContentAlignment="Center" Margin="0,0,12,0"/>
-              <Button Grid.Column="3" Content="End task" Classes="danger"
+              <TextBox Grid.Column="2" Classes="process-search" Text="{Binding Performance.SearchFilter}" Watermark="Filter by name or PID…" VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+              <Button Grid.Column="3" Content="End task" Classes="danger process-action"
                       Command="{Binding Performance.TerminateProcessCommand}" IsEnabled="{Binding Performance.HasSelectedProcess}"/>
             </Grid>
           </Border>
 
-          <Border Grid.Row="2" Classes="panel" Padding="12,12,12,8">
+          <Border Grid.Row="2" Classes="process-surface" Padding="0">
             <Grid RowDefinitions="Auto,*">
-              <Grid ColumnDefinitions="80,*,120" Margin="10,0,16,8">
+              <Grid ColumnDefinitions="80,*,120" Margin="16,12,16,8">
                 <TextBlock Text="PID" Classes="eyebrow"/>
-                <TextBlock Grid.Column="1" Text="Process" Classes="eyebrow"/>
+                <TextBlock Grid.Column="1" Text="PROCESS" Classes="eyebrow"/>
                 <TextBlock Grid.Column="2" Text="Memory" Classes="eyebrow" HorizontalAlignment="Right"/>
               </Grid>
-              <ListBox Grid.Row="1" Background="Transparent" ItemsSource="{Binding Performance.FilteredProcesses}"
+              <ListBox Grid.Row="1" Classes="process-list" ItemsSource="{Binding Performance.FilteredProcesses}"
                        SelectedItem="{Binding Performance.SelectedProcess, Mode=TwoWay}">
                 <ListBox.ItemTemplate>
                   <DataTemplate>
-                    <Grid ColumnDefinitions="80,*,120">
-                      <TextBlock Text="{Binding Id}" Classes="muted num" FontSize="12" VerticalAlignment="Center"/>
-                      <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                      <TextBlock Grid.Column="2" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}" Classes="num"
-                                 Foreground="#3FCF6B" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                    </Grid>
+                    <Border BorderBrush="#25313A" BorderThickness="0,1,0,0" Padding="16,10">
+                      <Grid ColumnDefinitions="80,*,120">
+                        <TextBlock Text="{Binding Id}" Classes="muted num" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="2" Text="{Binding MemoryMb, StringFormat='{}{0:F1} MB'}" Classes="num"
+                                   Foreground="#45D6A1" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                      </Grid>
+                    </Border>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
@@ -896,28 +1051,28 @@
         </Grid>
 
         <!-- ============ VIEW: SYSTEM HEALTH ============ -->
-        <ScrollViewer IsVisible="{Binding IsAnomaliesActive}" Padding="28,22">
-          <StackPanel Spacing="16" MaxWidth="1120">
+        <ScrollViewer IsVisible="{Binding IsAnomaliesActive}" Background="#080C0F" Padding="28,22">
+          <StackPanel Spacing="14" MaxWidth="1120">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="4">
                 <TextBlock Text="System Health" Classes="h1"/>
                 <TextBlock Text="Crash, hardware, driver, storage, and shutdown history from Windows Event Log or the Linux system journal." Classes="muted" FontSize="12"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button Content="{Binding Anomalies.RangeLabel}" Command="{Binding Anomalies.CycleRangeCommand}"/>
-                <Button Content="Scan now" Classes="primary" Command="{Binding Anomalies.ScanCommand}" IsEnabled="{Binding !Anomalies.IsScanning}"/>
+                <Button Content="{Binding Anomalies.RangeLabel}" Classes="health-action" Command="{Binding Anomalies.CycleRangeCommand}"/>
+                <Button Content="Scan now" Classes="primary health-action" Command="{Binding Anomalies.ScanCommand}" IsEnabled="{Binding !Anomalies.IsScanning}"/>
               </StackPanel>
             </Grid>
 
             <Grid ColumnDefinitions="*,12,*,12,*">
-              <Border Classes="panel" Padding="14">
-                <StackPanel Spacing="4"><TextBlock Text="Events" Classes="muted" FontSize="11"/><TextBlock Text="{Binding Anomalies.TotalCount}" Classes="big" Foreground="#E6E8EB"/></StackPanel>
+              <Border Classes="health-surface" Padding="14">
+                <StackPanel Spacing="4"><TextBlock Text="EVENTS" Classes="eyebrow"/><TextBlock Text="{Binding Anomalies.TotalCount}" Classes="big" Foreground="#E6E8EB"/></StackPanel>
               </Border>
-              <Border Grid.Column="2" Classes="panel" Padding="14">
-                <StackPanel Spacing="4"><TextBlock Text="Critical" Classes="muted" FontSize="11"/><TextBlock Text="{Binding Anomalies.CriticalCount}" Classes="big" Foreground="#F0525F"/></StackPanel>
+              <Border Grid.Column="2" Classes="health-surface" Padding="14">
+                <StackPanel Spacing="4"><TextBlock Text="CRITICAL" Classes="eyebrow"/><TextBlock Text="{Binding Anomalies.CriticalCount}" Classes="big" Foreground="#F0525F"/></StackPanel>
               </Border>
-              <Border Grid.Column="4" Classes="panel" Padding="14">
-                <StackPanel Spacing="4"><TextBlock Text="Warnings" Classes="muted" FontSize="11"/><TextBlock Text="{Binding Anomalies.WarningCount}" Classes="big" Foreground="#F5B335"/></StackPanel>
+              <Border Grid.Column="4" Classes="health-surface" Padding="14">
+                <StackPanel Spacing="4"><TextBlock Text="WARNINGS" Classes="eyebrow"/><TextBlock Text="{Binding Anomalies.WarningCount}" Classes="big" Foreground="#FFB23F"/></StackPanel>
               </Border>
             </Grid>
 
@@ -929,7 +1084,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <Border Classes="inset" Padding="9,6" Margin="0,0,8,8">
+                    <Border Classes="health-category" Padding="9,6" Margin="0,0,8,8">
                       <StackPanel Orientation="Horizontal" Spacing="7">
                         <Ellipse Width="7" Height="7" Fill="{Binding Color}" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding Name}" FontSize="11"/>
@@ -941,17 +1096,17 @@
               </ItemsControl>
             </StackPanel>
 
-            <Border Classes="panel" Padding="14">
+            <Border Classes="health-surface" Padding="10">
               <StackPanel Spacing="12">
                 <TextBlock Text="{Binding Anomalies.StatusMessage}" Classes="muted" FontSize="11"/>
                 <Grid ColumnDefinitions="*,12,220">
-                  <TextBox Text="{Binding Anomalies.SearchText}" Watermark="Search events, source, or category…"/>
-                  <ComboBox Grid.Column="2" ItemsSource="{Binding Anomalies.CategoryFilters}" SelectedItem="{Binding Anomalies.SelectedCategory, Mode=TwoWay}"/>
+                  <TextBox Classes="health-filter" Text="{Binding Anomalies.SearchText}" Watermark="Search events, source, or category…"/>
+                  <ComboBox Grid.Column="2" Classes="health-filter" ItemsSource="{Binding Anomalies.CategoryFilters}" SelectedItem="{Binding Anomalies.SelectedCategory, Mode=TwoWay}"/>
                 </Grid>
               </StackPanel>
             </Border>
 
-            <Border Classes="panel" Padding="0">
+            <Border Classes="health-surface" Padding="0">
               <Grid RowDefinitions="Auto,*">
                 <Grid ColumnDefinitions="105,*,Auto" Margin="16,12,16,8">
                   <TextBlock Text="SEVERITY" Classes="eyebrow"/>
@@ -963,7 +1118,7 @@
                   <ItemsControl ItemsSource="{Binding Anomalies.Events}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate DataType="models:AnomalyRecord">
-                        <Border BorderBrush="#2A2F36" BorderThickness="0,1,0,0" Padding="16,12">
+                        <Border BorderBrush="#25313A" BorderThickness="0,1,0,0" Padding="16,12">
                           <StackPanel Spacing="8">
                             <Grid ColumnDefinitions="105,*,Auto">
                               <TextBlock Text="{Binding SeverityBadge}" Foreground="{Binding SeverityColor}" Classes="num" FontWeight="SemiBold"/>
@@ -1053,8 +1208,11 @@
       </Border>
     </Grid>
 
+    <GridSplitter Grid.Column="3" Classes="pane-resizer" ResizeDirection="Columns"
+                  ResizeBehavior="PreviousAndNext" ShowsPreview="False"/>
+
     <!-- ===================== ASSISTANT RAIL ===================== -->
-    <Border Grid.Column="2" Classes="chat-rail" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="1,0,0,0">
+    <Border Grid.Column="4" Classes="chat-rail" Background="#080C0F" BorderBrush="#1D2A33" BorderThickness="1,0,0,0">
       <Grid RowDefinitions="*,Auto">
 
         <!-- Sphere + prompt (glowing box) -->
@@ -1102,6 +1260,13 @@
         </Grid>
 
         <!-- Conversation fills the upper rail; the prompt stays anchored at the bottom. -->
+        <StackPanel Grid.Row="0" Margin="22,14" Spacing="7" IsVisible="{Binding !HasMessages}"
+                    VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="300">
+          <TextBlock Text="Ask about this screen" FontSize="17" FontWeight="SemiBold" Foreground="#E6E8EB"
+                     TextAlignment="Center"/>
+          <TextBlock Text="I can explain what you’re seeing." Classes="muted" FontSize="12"
+                     TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
         <Border Grid.Row="0" Margin="14,14,14,0" Padding="4,0" IsVisible="{Binding HasMessages}">
           <Grid RowDefinitions="Auto,*">
             <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
