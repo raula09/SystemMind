@@ -30,4 +30,11 @@ public record HardwareTelemetry(
     long NetworkReceivedBytes = 0,
     long NetworkSentBytes = 0,
     double NetworkReceiveBytesPerSecond = 0,
-    double NetworkSendBytesPerSecond = 0);
+    double NetworkSendBytesPerSecond = 0,
+    IReadOnlyList<TemperatureReading>? Temperatures = null);
+
+/// <summary>One temperature sensor. Kind is CPU, GPU, Storage or System; Chip/Label identify the source.</summary>
+public record TemperatureReading(string Kind, string Chip, string Label, double Celsius)
+{
+    public string Name => string.IsNullOrEmpty(Label) ? Chip : $"{Chip} {Label}";
+}

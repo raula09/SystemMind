@@ -117,8 +117,17 @@ public sealed class RingGauge : Control
             : double.IsNaN(v) ? "—" : v.ToString("0.#", CultureInfo.InvariantCulture) + "%";
 
         var family = FontFamily.Default;
+        var mainTypeface = new Typeface(family, FontStyle.Normal, FontWeight.SemiBold);
         var mainFt = new FormattedText(main, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            new Typeface(family, FontStyle.Normal, FontWeight.SemiBold), size * 0.19, MainBrush);
+            mainTypeface, size * 0.19, MainBrush);
+
+        // Shrink long values (e.g. "N/A", "100.0%") so they stay inside the ring instead of spilling over it.
+        double innerWidth = (2 * r - t) * 0.82;
+        if (mainFt.Width > innerWidth)
+        {
+            mainFt = new FormattedText(main, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                mainTypeface, Math.Max(8, size * 0.19 * innerWidth / mainFt.Width), MainBrush);
+        }
 
         FormattedText? capFt = null;
         if (!string.IsNullOrEmpty(Caption))

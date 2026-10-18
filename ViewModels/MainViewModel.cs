@@ -22,6 +22,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly DispatcherTimer _resourceTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private string _gpuText = "GPU: unavailable";
     private ResourceMetric _resourceMetric = ResourceMetric.Ram;
+    private const int HistoryLength = 60;
+    private readonly Queue<double> _cpuHistory = new();
+    private readonly Queue<double> _memoryHistory = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -113,7 +116,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Memory" => $"{MemoryHeadline} is allocated ({MemoryDetail}). High memory pressure can cause slower app switching and disk paging.",
         "Network" => $"Current traffic is {NetworkDownText} received and {NetworkUpText} sent. Total traffic since monitoring began: {NetworkTotalInText} in and {NetworkTotalOutText} out.",
         "Disk" => $"Storage is {StoragePercent:F1}% used. {StorageDetail}. The drive list above breaks down usage by mounted filesystem.",
-        "Thermal" => $"CPU temperature is {ThermalCpuText}; the highest recorded sensor is {ThermalMaxText}. Sustained high temperatures can reduce performance.",
+        "Thermal" => $"CPU temperature: {ThermalCpuText}; hottest sensor: {ThermalMaxText}. Sustained high temperatures can reduce performance.",
         "Battery" => $"Battery level is {BatteryText}. Status: {BatteryStatusText}. Reported health: {BatteryHealthText}.",
         "GPU" => $"{GpuNameText}. {GpuMemoryText}. Current GPU state: {GpuText}.",
         _ => "Select a dashboard card to see more detail."
@@ -128,6 +131,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string CpuHeadline => $"{_snapshot?.CpuPercent:F0}%";
     public string CpuDetail => $"Across {Environment.ProcessorCount} logical cores";
     public double CpuPercent => _snapshot?.CpuPercent ?? 0;
+    public IReadOnlyList<double> CpuHistory => [.. _cpuHistory];
+    public IReadOnlyList<double> MemoryHistory => [.. _memoryHistory];
     public string CpuResourceText => $"{CpuPercent:F0}%";
     public string MemoryResourceText => _snapshot == null ? "—" : $"{_snapshot.MemoryUsedGb:F1} / {_snapshot.MemoryTotalGb:F1} GB";
     public string DiskResourceText => _snapshot == null ? "—" : $"{_snapshot.DiskPercent:F0}% used";
@@ -138,14 +143,56 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsGpuAvailable => _snapshot?.GpuPercent.HasValue == true;
     public string GpuNameText => _snapshot?.Hardware?.GpuName ?? "Unavailable";
     public string GpuMemoryText => _snapshot?.Hardware?.GpuMemoryGb is { } memory ? $"{memory:F1} GB VRAM" : "VRAM unavailable";
-    public string BatteryText => _snapshot?.Hardware?.BatteryPercent is { } percent ? $"{percent:F0}%" : "Unavailable";
-    public string BatteryStatusText => _snapshot?.Hardware?.BatteryStatus ?? "No battery detected";
-    public string BatteryHealthText => _snapshot?.Hardware?.BatteryHealthPercent is { } health ? $"{health:F0}%" : "Unavailable";
-    public string ThermalText => _snapshot?.Hardware?.CpuTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
-    public string ThermalCpuText => _snapshot?.Hardware?.CpuTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
-    public string ThermalMaxText => _snapshot?.Hardware?.MaxTemperatureC is { } temperature ? $"{temperature:F0}°C" : "Unavailable";
-    public string NetworkDownText => $"↓ {FormatRate(_snapshot?.Hardware?.NetworkReceiveBytesPerSecond ?? 0)}";
-    public string NetworkUpText => $"↑ {FormatRate(_snapshot?.Hardware?.NetworkSendBytesPerSecond ?? 0)}";
+    private bool HasBattery => _snapshot?.Hardware?.BatteryPercent is not null;
+    public string BatteryText => _snapshot?.Hardware?.BatteryPercent is { } percent ? $"{percent:F0}%" : "—";
+    public string BatteryStatusText => _snapshot?.Hardware?.BatteryStatus ?? "No battery";
+    public string BatteryHealthText => _snapshot?.Hardware?.BatteryHealthPercent is { } health ? $"{health:F0}%" : HasBattery ? "Unknown" : "—";
+
+    private IReadOnlyList<TemperatureReading> TemperatureReadings => _snapshot?.Hardware?.Temperatures ?? [];
+    public IReadOnlyList<TemperatureReading> TemperatureSensors =>
+        TemperatureReadings.OrderBy(reading => reading.Kind).ThenByDescending(reading => reading.Celsius).ToList();
+    public bool HasTemperatures => TemperatureReadings.Count > 0;
+
+    /// <summary>The ring shows the CPU when it has a sensor, otherwise the best other component.</summary>
+    private (string Kind, double Celsius)? PrimaryTemperature
+    {
+        get
+        {
+            foreach (var kind in new[] { ThermalSensors.Cpu, ThermalSensors.System, ThermalSensors.Gpu, ThermalSensors.Storage })
+                if (ThermalSensors.ForKind(TemperatureReadings, kind) is { } celsius) return (kind, celsius);
+            return null;
+        }
+    }
+
+    public string ThermalText => PrimaryTemperature is { } primary ? $"{primary.Celsius:F0}°C" : "—";
+    public string ThermalCaption => PrimaryTemperature?.Kind ?? "No sensor";
+    public string ThermalStatusText => PrimaryTemperature is { } primary
+        ? primary.Celsius >= 85 ? "Running hot" : primary.Celsius >= 70 ? "Warm" : "Normal"
+        : "No sensors reported";
+    public string ThermalSensorsText
+    {
+        get
+        {
+            if (PrimaryTemperature is not { } primary) return ThermalHint;
+            var others = new[] { ThermalSensors.Cpu, ThermalSensors.Gpu, ThermalSensors.Storage }
+                .Where(kind => kind != primary.Kind)
+                .Select(kind => (Kind: kind, Celsius: ThermalSensors.ForKind(TemperatureReadings, kind)))
+                .Where(other => other.Celsius.HasValue)
+                .Select(other => $"{other.Kind} {other.Celsius:F0}°C")
+                .ToList();
+            return others.Count > 0 ? string.Join(" · ", others) : $"Hottest sensor {ThermalMaxText}";
+        }
+    }
+    public string ThermalHint => OperatingSystem.IsLinux() ? "Run sensors-detect (lm_sensors) to load a sensor driver"
+        : OperatingSystem.IsWindows() ? "Windows exposes no thermal zone on this device"
+        : "This OS does not expose temperature sensors";
+    public string ThermalCpuText => FormatTemperature(ThermalSensors.CpuTemperature(TemperatureReadings));
+    public string ThermalGpuText => FormatTemperature(ThermalSensors.ForKind(TemperatureReadings, ThermalSensors.Gpu));
+    public string ThermalStorageText => FormatTemperature(ThermalSensors.ForKind(TemperatureReadings, ThermalSensors.Storage));
+    public string ThermalMaxText => FormatTemperature(_snapshot?.Hardware?.MaxTemperatureC);
+
+    public string NetworkDownText => FormatRate(_snapshot?.Hardware?.NetworkReceiveBytesPerSecond ?? 0);
+    public string NetworkUpText => FormatRate(_snapshot?.Hardware?.NetworkSendBytesPerSecond ?? 0);
     public string NetworkTotalInText => FormatBytes(_snapshot?.Hardware?.NetworkReceivedBytes ?? 0);
     public string NetworkTotalOutText => FormatBytes(_snapshot?.Hardware?.NetworkSentBytes ?? 0);
     public string UsageBreakdownTitle
@@ -242,23 +289,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void Refresh()
     {
         _snapshot = _monitor.Capture();
+        PushHistory(_cpuHistory, _snapshot.CpuPercent);
+        PushHistory(_memoryHistory, _snapshot.MemoryPercent);
         Recommendations.Clear();
 
         AddRecommendation(
             _snapshot.MemoryPercent > 80,
-            "Memory pressure",
+            _snapshot.MemoryPercent > 80 ? "Memory pressure" : "Memory healthy",
             _snapshot.MemoryPercent > 80 ? "Close heavy background applications to prevent paging." : "Memory usage is within safe limits.",
             "RAM");
 
         AddRecommendation(
             _snapshot.DiskPercent > 80,
-            "Storage running tight",
+            _snapshot.DiskPercent > 80 ? "Storage running tight" : "Storage healthy",
             _snapshot.DiskPercent > 80 ? "Review Downloads, caches, and large media files." : "Adequate storage headroom available.",
             "Disk");
 
         AddRecommendation(
             _snapshot.CpuPercent > 75,
-            "CPU activity elevated",
+            _snapshot.CpuPercent > 75 ? "CPU activity elevated" : "CPU load normal",
             _snapshot.CpuPercent > 75 ? "Active compute tasks running across cores." : "CPU headroom is comfortably available.",
             "CPU");
 
@@ -268,7 +317,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         DiskItems.Clear();
         foreach (var d in _snapshot.Disks)
-            DiskItems.Add(new DiskRow(d.Name, $"{d.UsedGb:F0} / {d.TotalGb:F0} GB", d.TotalGb == 0 ? 0 : d.UsedGb / d.TotalGb * 100));
+            DiskItems.Add(new DiskRow(d.Name, DriveItem.FormatUsage(d.UsedGb, d.TotalGb), d.TotalGb == 0 ? 0 : d.UsedGb / d.TotalGb * 100));
 
         _gpuText = _snapshot.GpuPercent is { } gpu
             ? $"{gpu:F0}%"
@@ -282,8 +331,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnChanged(nameof(BatteryStatusText));
         OnChanged(nameof(BatteryHealthText));
         OnChanged(nameof(ThermalText));
+        OnChanged(nameof(ThermalCaption));
+        OnChanged(nameof(ThermalStatusText));
+        OnChanged(nameof(ThermalSensorsText));
         OnChanged(nameof(ThermalCpuText));
+        OnChanged(nameof(ThermalGpuText));
+        OnChanged(nameof(ThermalStorageText));
         OnChanged(nameof(ThermalMaxText));
+        OnChanged(nameof(TemperatureSensors));
+        OnChanged(nameof(HasTemperatures));
         OnChanged(nameof(NetworkDownText));
         OnChanged(nameof(NetworkUpText));
         OnChanged(nameof(NetworkTotalInText));
@@ -311,7 +367,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             nameof(MemoryHeadline), nameof(MemoryDetail), nameof(MemoryPercent),
             nameof(StorageHeadline), nameof(StorageDetail), nameof(StoragePercent),
-            nameof(CpuHeadline), nameof(CpuDetail), nameof(CpuPercent)
+            nameof(CpuHeadline), nameof(CpuDetail), nameof(CpuPercent),
+            nameof(CpuHistory), nameof(MemoryHistory)
         })
         {
             OnChanged(name);
@@ -403,7 +460,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
     };
 
     private void AddRecommendation(bool urgent, string title, string detail, string impact) =>
-        Recommendations.Add(new Recommendation(title, detail, impact, urgent ? "#FF9B70" : "#45D6A5"));
+        Recommendations.Add(new Recommendation(title, detail, impact, urgent ? "#FF9B70" : "#45D6A5", urgent));
+
+    private static void PushHistory(Queue<double> history, double value)
+    {
+        history.Enqueue(value);
+        while (history.Count > HistoryLength) history.Dequeue();
+    }
+
+    private static string FormatTemperature(double? celsius) => celsius is { } value ? $"{value:F0}°C" : "Not reported";
 
     private static string GetDisplayCategory(string processName, string category)
     {
@@ -503,7 +568,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-public record Recommendation(string Title, string Detail, string Impact, string Accent);
+public record Recommendation(string Title, string Detail, string Impact, string Accent, bool IsUrgent);
 public record ProcessRow(string Name, string Memory);
 public record DiskRow(string Name, string Value, double Percent, string MountPoint = "");
 public enum ResourceMetric { Ram, Cpu, Gpu }

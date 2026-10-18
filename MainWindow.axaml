@@ -58,14 +58,14 @@
       <Setter Property="CornerRadius" Value="12"/>
       <Setter Property="Padding" Value="16"/>
     </Style>
-    <!-- Dashboard cards fill their grid cell, so every row is the same size at any window width. -->
+    <!-- Dashboard cards fill their grid cell, so every row is the same size at any window width.
+         Gaps come from spacer grid columns, keeping the outer edges flush with the header. -->
     <Style Selector="Border.dashboard-card">
       <Setter Property="Background" Value="#0D1318"/>
       <Setter Property="BorderBrush" Value="#25313A"/>
       <Setter Property="CornerRadius" Value="0"/>
       <Setter Property="MinHeight" Value="250"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
-      <Setter Property="Margin" Value="0,0,14,14"/>
       <Setter Property="ClipToBounds" Value="True"/>
       <Setter Property="Cursor" Value="Hand"/>
     </Style>
@@ -534,9 +534,11 @@
       <Grid Grid.Row="1">
 
         <!-- ============ VIEW: DASHBOARD ============ -->
-        <ScrollViewer Classes="overview" IsVisible="{Binding IsOverviewActive}" Padding="28,24,28,20"
+        <!-- Gutters are a Margin on the content, not ScrollViewer.Padding: in Avalonia 11.2 the padding is
+             ignored while measuring, so wide content got arranged past the right edge and clipped. -->
+        <ScrollViewer Classes="overview" IsVisible="{Binding IsOverviewActive}"
                       Background="#080C0F" HorizontalScrollBarVisibility="Disabled">
-          <StackPanel Spacing="12">
+          <StackPanel x:Name="DashboardContent" Spacing="12" Margin="28,24,28,20" SizeChanged="DashboardContent_OnSizeChanged">
 
             <!-- Header -->
             <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
@@ -547,7 +549,7 @@
                 <Ellipse Width="5" Height="5" Fill="#45D6A1" VerticalAlignment="Center"/>
                 <TextBlock Text="LIVE" Foreground="#45D6A1" FontSize="10" FontWeight="SemiBold" LetterSpacing="1"/>
               </StackPanel>
-              <Button Grid.Column="1" Classes="dashboard-action" Content="Refresh ↗" Command="{Binding RefreshCommand}"/>
+              <Button Grid.Column="1" Classes="dashboard-action" Content="Refresh" Command="{Binding RefreshCommand}"/>
             </Grid>
 
             <!-- Full-width health summary, followed by compact metric rows. -->
@@ -574,8 +576,12 @@
                       <DataTemplate>
                         <Border BorderBrush="#2A2F36" BorderThickness="0,0,0,1" Padding="0,8">
                           <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Path Width="13" Height="12" Stretch="Uniform" Fill="{Binding Accent}" Margin="0,2,9,0" VerticalAlignment="Top"
-                                  Data="M7,1 L13,12.5 H1 Z"/>
+                            <Grid Width="13" Height="13" Margin="0,1,9,0" VerticalAlignment="Top">
+                              <Path IsVisible="{Binding IsUrgent}" Stretch="Uniform" Fill="{Binding Accent}" Data="M7,1 L13,12.5 H1 Z"/>
+                              <Ellipse IsVisible="{Binding !IsUrgent}" Fill="{Binding Accent}"/>
+                              <Path IsVisible="{Binding !IsUrgent}" Stroke="#0D1318" StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                                    Data="M3.6,6.7 L5.6,8.7 L9.4,4.6"/>
+                            </Grid>
                             <StackPanel Grid.Column="1" Spacing="3">
                               <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="SemiBold" TextWrapping="Wrap" LineHeight="15"/>
                               <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="10.5" FontStyle="Italic" TextWrapping="Wrap" LineHeight="14"/>
@@ -590,7 +596,8 @@
                 </StackPanel>
               </Border>
 
-              <UniformGrid Columns="4">
+              <!-- Column counts are re-flowed in code-behind for narrow workspaces. -->
+              <Grid x:Name="MetricCards" ColumnDefinitions="*,14,*,14,*,14,*">
 
               <!-- CPU -->
               <Border Classes="panel dashboard-card metric-card" Tag="CPU" PointerPressed="DashboardCard_OnPointerPressed">
@@ -604,13 +611,13 @@
                   </Grid>
                   <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#00AEEF" ValueText="{Binding CpuHeadline}" Caption="CPU"
                                       HorizontalAlignment="Center"/>
-                  <TextBlock Text="{Binding CpuDetail}" Classes="dim num" FontSize="10" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding CpuDetail}" Classes="dim num" FontSize="10" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                   <controls:TelemetryChartControl Values="{Binding CpuHistory}" Stroke="#00AEEF" Height="32"/>
                 </StackPanel>
               </Border>
 
               <!-- MEMORY -->
-              <Border Classes="panel dashboard-card metric-card" Tag="Memory" PointerPressed="DashboardCard_OnPointerPressed">
+              <Border Grid.Column="2" Classes="panel dashboard-card metric-card" Tag="Memory" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -629,7 +636,7 @@
               </Border>
 
               <!-- GPU -->
-              <Border Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="GPU" PointerPressed="DashboardCard_OnPointerPressed">
+              <Border Grid.Column="4" Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="GPU" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -646,7 +653,7 @@
               </Border>
 
               <!-- THERMAL -->
-              <Border Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="Thermal" PointerPressed="DashboardCard_OnPointerPressed">
+              <Border Grid.Column="6" Classes="panel dashboard-card metric-card" x:CompileBindings="False" Tag="Thermal" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -655,18 +662,18 @@
                     </StackPanel>
                     <TextBlock Grid.Column="1" Text="Details ›" Classes="dim" FontSize="10.5"/>
                   </Grid>
+                  <!-- Shows the CPU when it has a sensor, otherwise the best available component (caption says which). -->
                   <controls:RingGauge Width="100" Height="100" Thickness="9" Stroke="#FFB23F"
-                                      ValueText="{Binding ThermalText, FallbackValue='—'}" Caption="Temp" HorizontalAlignment="Center"/>
-                  <TextBlock Text="{Binding ThermalCpuText, FallbackValue='—'}" Classes="num" FontSize="10.5" HorizontalAlignment="Center"/>
-                  <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                    <TextBlock Text="CPU temperature · max" Classes="dim" FontSize="10"/>
-                    <TextBlock Text="{Binding ThermalMaxText, FallbackValue='—'}" Classes="dim num" FontSize="10"/>
-                  </StackPanel>
+                                      ValueText="{Binding ThermalText, FallbackValue='—'}" Caption="{Binding ThermalCaption, FallbackValue='Temp'}"
+                                      HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding ThermalStatusText, FallbackValue='—'}" Classes="num" FontSize="10.5" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding ThermalSensorsText, FallbackValue='—'}" Classes="dim num" FontSize="10"
+                             TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
 
-              </UniformGrid>
-              <UniformGrid Columns="3">
+              </Grid>
+              <Grid x:Name="BottomCards" ColumnDefinitions="*,14,*,14,*">
 
               <!-- DISK -->
               <Border Classes="panel dashboard-card dashboard-bottom-card" Tag="Disk" PointerPressed="DashboardCard_OnPointerPressed">
@@ -684,10 +691,14 @@
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="5">
                       <TextBlock Text="{Binding StorageHeadline}" Classes="num" FontSize="11"/>
                       <TextBlock Text="{Binding StorageDetail}" Classes="muted num" FontSize="10.5"/>
-                      <ItemsControl ItemsSource="{Binding DiskItems}">
+                      <ItemsControl ItemsSource="{Binding DiskItems}" Margin="0,2,0,0">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate>
-                            <TextBlock Text="{Binding Name}" Classes="dim" FontSize="9.5"/>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                              <TextBlock Text="{Binding Name}" Classes="dim" FontSize="10" TextTrimming="CharacterEllipsis"
+                                         ToolTip.Tip="{Binding Value}"/>
+                              <TextBlock Grid.Column="1" Text="{Binding Percent, StringFormat='{}{0:F0}%'}" Classes="dim num" FontSize="10" Margin="8,0,0,0"/>
+                            </Grid>
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
@@ -697,7 +708,7 @@
               </Border>
 
               <!-- BATTERY (optional data) -->
-              <Border Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Battery" PointerPressed="DashboardCard_OnPointerPressed">
+              <Border Grid.Column="2" Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Battery" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -724,7 +735,7 @@
               </Border>
 
               <!-- NETWORK -->
-              <Border Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Network" PointerPressed="DashboardCard_OnPointerPressed">
+              <Border Grid.Column="4" Classes="panel dashboard-card dashboard-bottom-card" x:CompileBindings="False" Tag="Network" PointerPressed="DashboardCard_OnPointerPressed">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -745,13 +756,16 @@
                   </Grid>
                   <Border Height="1" Background="#25313A"/>
                   <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Total in / out" Classes="muted" FontSize="10.5"/>
+                    <TextBlock Text="Total received" Classes="muted" FontSize="10.5"/>
                     <TextBlock Grid.Column="1" Text="{Binding NetworkTotalInText, FallbackValue='—'}" Classes="num" FontSize="10.5"/>
                   </Grid>
-                  <TextBlock Text="{Binding NetworkTotalOutText, FallbackValue='—'}" Classes="dim num" FontSize="10" HorizontalAlignment="Right"/>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Total sent" Classes="muted" FontSize="10.5"/>
+                    <TextBlock Grid.Column="1" Text="{Binding NetworkTotalOutText, FallbackValue='—'}" Classes="num" FontSize="10.5"/>
+                  </Grid>
                 </StackPanel>
               </Border>
-              </UniformGrid>
+              </Grid>
             </StackPanel>
 
           </StackPanel>
@@ -854,7 +868,7 @@
               <Grid RowDefinitions="Auto,*">
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,6,8">
                   <TextBlock Text="FILE TYPES" Classes="eyebrow"/>
-                  <TextBlock Grid.Column="1" Text="Category" Classes="eyebrow" Margin="42,0,0,0"/>
+                  <TextBlock Grid.Column="1" Text="Category" Classes="eyebrow" Margin="42,0,8,0" TextTrimming="CharacterEllipsis"/>
                   <TextBlock Grid.Column="2" Text="Size" Classes="eyebrow" Margin="0,0,16,0"/>
                   <TextBlock Grid.Column="3" Text="Share" Classes="eyebrow"/>
                 </Grid>
@@ -915,12 +929,12 @@
         </Grid>
 
         <!-- ============ VIEW: CLEANUP ============ -->
-        <ScrollViewer IsVisible="{Binding IsCleanupActive}" Background="#080C0F" Padding="28,22">
-          <StackPanel Spacing="14">
+        <ScrollViewer IsVisible="{Binding IsCleanupActive}" Background="#080C0F">
+          <StackPanel Spacing="14" Margin="28,22">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="4">
                 <TextBlock Text="Cleanup" Classes="h1"/>
-                <TextBlock Text="Find caches, orphaned packages and build artifacts you can safely reclaim." Classes="muted" FontSize="12"/>
+                <TextBlock Text="Find caches, orphaned packages and build artifacts you can safely reclaim." Classes="muted" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Content="Scan" Classes="cleanup-action" Command="{Binding Cleanup.ScanCommand}" IsEnabled="{Binding Cleanup.CanOperate}"/>
@@ -933,7 +947,7 @@
                 <StackPanel Spacing="6">
                   <TextBlock Text="DETECTED" Classes="eyebrow"/>
                   <TextBlock Text="{Binding Cleanup.TotalReclaimableText}" Classes="big" Foreground="#00AEEF"/>
-                  <TextBlock Text="Across cache and temp targets" Classes="muted" FontSize="11"/>
+                  <TextBlock Text="Across cache and temp targets" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                 </StackPanel>
               </Border>
               <Border Grid.Column="2" Classes="cleanup-surface" Padding="14">
@@ -1044,12 +1058,12 @@
         </Grid>
 
         <!-- ============ VIEW: SYSTEM HEALTH ============ -->
-        <ScrollViewer IsVisible="{Binding IsAnomaliesActive}" Background="#080C0F" Padding="28,22">
-          <StackPanel Spacing="14" MaxWidth="1120">
+        <ScrollViewer IsVisible="{Binding IsAnomaliesActive}" Background="#080C0F">
+          <StackPanel Spacing="14" MaxWidth="1120" Margin="28,22">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="4">
                 <TextBlock Text="System Health" Classes="h1"/>
-                <TextBlock Text="Crash, hardware, driver, storage, and shutdown history from Windows Event Log or the Linux system journal." Classes="muted" FontSize="12"/>
+                <TextBlock Text="Crash, hardware, driver, storage, and shutdown history from Windows Event Log or the Linux system journal." Classes="muted" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Content="{Binding Anomalies.RangeLabel}" Classes="health-action" Command="{Binding Anomalies.CycleRangeCommand}"/>
@@ -1159,13 +1173,16 @@
                 <TextBlock x:Name="DetailTitle" Text="Details" FontSize="15" FontWeight="SemiBold"/>
                 <TextBlock x:Name="DetailSubtitle" Text="" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
               </StackPanel>
-              <Button Grid.Column="2" Content="✕" Classes="sm" Click="DetailClose_OnClick" VerticalAlignment="Top"/>
+              <Button Grid.Column="2" Classes="sm" Click="DetailClose_OnClick" VerticalAlignment="Top" ToolTip.Tip="Close">
+                <Path Width="9" Height="9" Stretch="Uniform" Stroke="#DADEE3" StrokeThickness="1.4" StrokeLineCap="Round"
+                      Data="M1,1 L8,8 M8,1 L1,8"/>
+              </Button>
             </Grid>
           </Border>
 
           <!-- Body -->
-          <ScrollViewer Grid.Row="1" Padding="18,14">
-            <StackPanel Spacing="14">
+          <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="14" Margin="18,14">
               <StackPanel Spacing="6">
                 <TextBlock Text="LIVE VALUES" Classes="eyebrow"/>
                 <ItemsControl x:Name="DetailRows">
@@ -1173,7 +1190,8 @@
                     <DataTemplate>
                       <Border BorderBrush="#262B32" BorderThickness="0,0,0,1" Padding="0,7">
                         <Grid ColumnDefinitions="*,Auto">
-                          <TextBlock Text="{Binding Label}" Classes="muted" FontSize="11.5" TextWrapping="Wrap" MaxWidth="170"/>
+                          <TextBlock Text="{Binding Label}" Classes="muted" FontSize="11.5" TextWrapping="Wrap" MaxWidth="170"
+                                     HorizontalAlignment="Left"/>
                           <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="num" FontSize="11.5" FontWeight="SemiBold"
                                      TextWrapping="Wrap" MaxWidth="190" TextAlignment="Right"/>
                         </Grid>
@@ -1217,23 +1235,20 @@
               </Grid>
 
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
-                <Grid ColumnDefinitions="Auto,*">
-                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock Text="Assistant" Classes="cardtitle"/>
-                    <TextBlock Text="· ready" Classes="dim" FontSize="10.5" IsVisible="{Binding !IsAiThinking}"/>
-                    <TextBlock Text="· analysing…" Foreground="#00AEEF" FontSize="10.5" IsVisible="{Binding IsAiThinking}"/>
-                  </StackPanel>
-                  <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                      <Button Content="Break down scan" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is taking up all my space? Break down the scan."/>
-                      <Button Content="Safe cleanups" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up to free disk space?"/>
-                      <Button Content="node_modules" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="What is node_modules, and can I delete it?"/>
-                      <Button Content="Check memory" Classes="chip" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?"/>
-                    </StackPanel>
-                  </ScrollViewer>
-                </Grid>
-                <TextBox Text="{Binding Prompt}" Watermark="Ask about the current scan, disk usage, memory or the selected file…"
-                         MinHeight="40" VerticalContentAlignment="Center" FontSize="12.5"
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="Assistant" Classes="cardtitle"/>
+                  <TextBlock Text="· ready" Classes="dim" FontSize="10.5" IsVisible="{Binding !IsAiThinking}" VerticalAlignment="Center"/>
+                  <TextBlock Text="· analysing…" Foreground="#00AEEF" FontSize="10.5" IsVisible="{Binding IsAiThinking}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- Chips wrap onto another line in a narrow rail instead of being clipped. -->
+                <WrapPanel Margin="0,0,0,-6">
+                  <Button Content="Break down scan" Classes="chip" Margin="0,0,6,6" Command="{Binding QuickAskCommand}" CommandParameter="What is taking up all my space? Break down the scan."/>
+                  <Button Content="Safe cleanups" Classes="chip" Margin="0,0,6,6" Command="{Binding QuickAskCommand}" CommandParameter="What can I safely clean up to free disk space?"/>
+                  <Button Content="node__modules" Classes="chip" Margin="0,0,6,6" Command="{Binding QuickAskCommand}" CommandParameter="What is node_modules, and can I delete it?"/>
+                  <Button Content="Check memory" Classes="chip" Margin="0,0,6,6" Command="{Binding QuickAskCommand}" CommandParameter="Why is my RAM being used?"/>
+                </WrapPanel>
+                <TextBox Text="{Binding Prompt}" Watermark="Ask about disk, memory, or a file…"
+                         MinHeight="40" VerticalContentAlignment="Center" FontSize="12.5" TextWrapping="Wrap"
                          IsEnabled="{Binding !IsAiThinking}">
                   <TextBox.KeyBindings>
                     <KeyBinding Gesture="Enter" Command="{Binding SendCommand}"/>

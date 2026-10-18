@@ -21,7 +21,12 @@ public sealed class DriveItem
         ? "🎮"
         : (IsRoot ? "🖥️" : "💾");
 
-    public string FormattedCapacity => $"{UsedGb:F0} / {TotalGb:F0} GB";
-    public string FormattedFree => $"{FreeGb:F0} GB free";
+    public string FormattedCapacity => FormatUsage(UsedGb, TotalGb);
+    public string FormattedFree => FreeGb < 1 ? $"{FreeGb * 1024:F0} MB free" : $"{FreeGb:F0} GB free";
     public string FormattedPercent => $"{UsagePercent:F0}%";
+
+    /// <summary>"700 / 915 GB", or MB for small volumes such as /boot that would otherwise read "0 / 0 GB".</summary>
+    public static string FormatUsage(double usedGb, double totalGb) => totalGb < 1
+        ? $"{usedGb * 1024:F0} / {totalGb * 1024:F0} MB"
+        : $"{usedGb:F0} / {totalGb:F0} GB";
 }

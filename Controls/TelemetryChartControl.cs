@@ -68,6 +68,7 @@ public sealed class TelemetryChartControl : Control
             double height = bounds.Height;
             double padding = 4;
             int count = values.Count;
+            bool started = false;
 
             for (int i = 0; i < count; i++)
             {
@@ -75,18 +76,22 @@ public sealed class TelemetryChartControl : Control
                 if (double.IsNaN(raw) || double.IsInfinity(raw))
                     continue;
 
-                double x = padding + (i / Math.Max(1, count - 1)) * (width - padding * 2);
+                double x = padding + ((double)i / Math.Max(1, count - 1)) * (width - padding * 2);
                 double y = height - padding - ((raw - min) / (max - min)) * (height - padding * 2);
 
-                if (i == 0)
+                if (!started)
                 {
                     gc.BeginFigure(new Point(x, y), false);
+                    started = true;
                 }
                 else
                 {
                     gc.LineTo(new Point(x, y));
                 }
             }
+
+            if (started)
+                gc.EndFigure(false);
         }
 
         context.DrawGeometry(null, pen, geom);

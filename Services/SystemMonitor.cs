@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Text;
 using DiagnoX.Models;
 
 namespace DiagnoX.Services;
@@ -16,6 +17,8 @@ public sealed class SystemMonitor
     private (ulong Idle, ulong Kernel, ulong User)? _previousSystemTimes;
     private (ulong Idle, ulong Total)? _previousLinuxCpu;
     private (long Received, long Sent, DateTime SampledAt)? _previousNetwork;
+    private (double? Celsius, DateTime SampledAt) _nvidiaTemperature;
+    private static readonly string? NvidiaSmiPath = FindNvidiaSmi();
 
     public SystemSnapshot Capture()
     {
@@ -244,8 +247,8 @@ public sealed class SystemMonitor
                     {
                         var parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length < 3) continue;
-                        var device = parts[0];
-                        var mountPoint = parts[1];
+                        var device = DecodeMountField(parts[0]);
+                        var mountPoint = DecodeMountField(parts[1]);
                         var fstype = parts[2];
                         results.Add((device, mountPoint, fstype));
                     }
@@ -253,11 +256,11 @@ public sealed class SystemMonitor
                     {
                         var parts = line.Split(' ');
                         if (parts.Length < 10) continue;
-                        var mountPoint = parts[4];
+                        var mountPoint = DecodeMountField(parts[4]);
                         var sep = Array.IndexOf(parts, "-");
                         if (sep < 0 || sep + 2 >= parts.Length) continue;
                         var fstype = parts[sep + 1];
-                        var device = parts[sep + 2];
+                        var device = DecodeMountField(parts[sep + 2]);
                         results.Add((device, mountPoint, fstype));
                     }
                 }
@@ -280,7 +283,7 @@ public sealed class SystemMonitor
                 {
                     try
                     {
-                        var label = Path.GetFileName(link);
+                        var label = DecodeUdevName(Path.GetFileName(link));
                         var target = new FileInfo(link).LinkTarget;
                         if (!string.IsNullOrEmpty(target))
                         {
@@ -294,6 +297,57 @@ public sealed class SystemMonitor
             catch { }
         }
         return dict;
+    }
+
+    /// <summary>Decodes the octal escapes (<c>\040</c> = space) the kernel uses in /proc mount tables.</summary>
+    public static string DecodeMountField(string value)
+    {
+        if (!value.Contains('\\')) return value;
+
+        var result = new StringBuilder(value.Length);
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '\\' && i + 3 < value.Length &&
+                value.AsSpan(i + 1, 3).IndexOfAnyExcept("01234567") < 0)
+            {
+                result.Append((char)Convert.ToInt32(value.Substring(i + 1, 3), 8));
+                i += 3;
+                continue;
+            }
+            result.Append(value[i]);
+        }
+        return result.ToString();
+    }
+
+    /// <summary>Decodes udev's <c>\xHH</c> escapes in /dev/disk/by-label names (<c>NVME\x201TB</c> = "NVME 1TB").</summary>
+    public static string DecodeUdevName(string value)
+    {
+        if (!value.Contains("\\x", StringComparison.Ordinal)) return value;
+
+        // Escapes are raw UTF-8 bytes, so collect consecutive ones before decoding.
+        var result = new StringBuilder(value.Length);
+        var pending = new List<byte>();
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '\\' && i + 3 < value.Length && value[i + 1] == 'x' &&
+                byte.TryParse(value.AsSpan(i + 2, 2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var b))
+            {
+                pending.Add(b);
+                i += 3;
+                continue;
+            }
+            FlushPending();
+            result.Append(value[i]);
+        }
+        FlushPending();
+        return result.ToString();
+
+        void FlushPending()
+        {
+            if (pending.Count == 0) return;
+            result.Append(Encoding.UTF8.GetString(pending.ToArray()));
+            pending.Clear();
+        }
     }
 
     public bool TerminateProcess(int pid)
@@ -392,7 +446,7 @@ public sealed class SystemMonitor
     {
         var (received, sent, receiveRate, sendRate) = ReadNetwork();
         var battery = ReadBattery();
-        var thermal = ReadThermal();
+        var temperatures = ReadTemperatures(gpuUsage);
         var detectedGpu = ReadGpuDetails();
         var gpu = (Name: gpuUsage.Name ?? detectedGpu.Name, MemoryGb: gpuUsage.MemoryGb ?? detectedGpu.MemoryGb);
 
@@ -402,12 +456,13 @@ public sealed class SystemMonitor
             battery.Percent,
             battery.Status,
             battery.HealthPercent,
-            thermal.CpuTemperatureC,
-            thermal.MaxTemperatureC,
+            ThermalSensors.CpuTemperature(temperatures),
+            temperatures.Count == 0 ? null : temperatures.Max(reading => reading.Celsius),
             received,
             sent,
             receiveRate,
-            sendRate);
+            sendRate,
+            temperatures);
     }
 
     private (long Received, long Sent, double ReceiveRate, double SendRate) ReadNetwork()
@@ -463,8 +518,10 @@ public sealed class SystemMonitor
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return (null, null, null);
         try
         {
+            // Wireless mice, keyboards and headsets also report type=Battery, but with scope=Device.
             var batteries = Directory.EnumerateDirectories("/sys/class/power_supply")
-                .Where(path => ReadText(Path.Combine(path, "type")).Equals("Battery", StringComparison.OrdinalIgnoreCase))
+                .Where(path => ReadText(Path.Combine(path, "type")).Equals("Battery", StringComparison.OrdinalIgnoreCase) &&
+                               !ReadText(Path.Combine(path, "scope")).Equals("Device", StringComparison.OrdinalIgnoreCase))
                 .ToList();
             if (batteries.Count == 0) return (null, null, null);
 
@@ -481,25 +538,93 @@ public sealed class SystemMonitor
         catch { return (null, null, null); }
     }
 
-    private static (double? CpuTemperatureC, double? MaxTemperatureC) ReadThermal()
+    private List<TemperatureReading> ReadTemperatures(GpuUsage gpuUsage)
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !Directory.Exists("/sys/class/thermal")) return (null, null);
+        var readings = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? ReadLinuxTemperatures()
+            : RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ReadWindowsTemperatures()
+            : [];
+
+        // The proprietary NVIDIA driver exposes no hwmon or ACPI sensor; nvidia-smi is the only source.
+        var nvidiaTemperature = gpuUsage.TemperatureC ??
+            (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ReadWindowsNvidiaTemperature() : null);
+        if (nvidiaTemperature is { } celsius && readings.All(reading => reading.Kind != ThermalSensors.Gpu))
+            AddTemperature(readings, ThermalSensors.Gpu, "nvidia-smi", "", celsius);
+
+        return readings;
+    }
+
+    private static List<TemperatureReading> ReadLinuxTemperatures()
+    {
+        var readings = new List<TemperatureReading>();
+        var hwmonChips = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            var readings = Directory.EnumerateDirectories("/sys/class/thermal", "thermal_zone*")
-                .Select(path => (Type: ReadText(Path.Combine(path, "type")), Temp: ReadDouble(Path.Combine(path, "temp"))))
-                .Where(reading => reading.Temp.HasValue)
-                .Select(reading => (reading.Type, Temp: NormalizeTemperature(reading.Temp!.Value)))
-                .Where(reading => reading.Temp is > 0 and < 150)
-                .ToList();
-            if (readings.Count == 0) return (null, null);
+            // hwmon is where desktop CPUs (k10temp, zenpower, coretemp), GPUs and NVMe drives report.
+            if (Directory.Exists("/sys/class/hwmon"))
+            {
+                foreach (var device in Directory.EnumerateDirectories("/sys/class/hwmon"))
+                {
+                    var chip = ReadText(Path.Combine(device, "name"));
+                    hwmonChips.Add(chip.Replace('-', '_'));
+                    foreach (var input in Directory.EnumerateFiles(device, "temp*_input"))
+                    {
+                        var label = ReadText(input[..^"input".Length] + "label");
+                        if (ReadDouble(input) is { } milliCelsius && ThermalSensors.Classify(chip, label) is { } kind)
+                            AddTemperature(readings, kind, chip, label, milliCelsius / 1000d);
+                    }
+                }
+            }
 
-            var cpu = readings.Where(reading => new[] { "cpu", "core", "package", "x86" }
-                    .Any(token => reading.Type.Contains(token, StringComparison.OrdinalIgnoreCase)))
-                .Select(reading => (double?)reading.Temp).DefaultIfEmpty(null).Max();
-            return (cpu ?? readings.Max(reading => reading.Temp), readings.Max(reading => reading.Temp));
+            // ARM boards and some laptops expose sensors only as thermal zones. Skip zones hwmon already covered.
+            if (Directory.Exists("/sys/class/thermal"))
+            {
+                foreach (var zone in Directory.EnumerateDirectories("/sys/class/thermal", "thermal_zone*"))
+                {
+                    var type = ReadText(Path.Combine(zone, "type"));
+                    if (hwmonChips.Contains(type.Replace('-', '_')) || ReadDouble(Path.Combine(zone, "temp")) is not { } raw) continue;
+                    var isCpu = new[] { "cpu", "core", "pkg", "package", "soc" }
+                        .Any(token => type.Contains(token, StringComparison.OrdinalIgnoreCase));
+                    AddTemperature(readings, isCpu ? ThermalSensors.Cpu : ThermalSensors.System, "thermal", type, NormalizeTemperature(raw));
+                }
+            }
         }
-        catch { return (null, null); }
+        catch { }
+        return readings;
+    }
+
+    private static List<TemperatureReading> ReadWindowsTemperatures()
+    {
+        var readings = new List<TemperatureReading>();
+        // ACPI thermal zones are readable without administrator rights. Laptops usually expose one that
+        // tracks the CPU package; many desktops expose none. Values are tenths of Kelvin / Kelvin.
+        var zones = ReadPdhCounterArray(@"\Thermal Zone Information(*)\High Precision Temperature", 0)
+            .Select(zone => (zone.Instance, Celsius: zone.Value / 10d - 273.15)).ToList();
+        if (zones.Count == 0)
+        {
+            zones = ReadPdhCounterArray(@"\Thermal Zone Information(*)\Temperature", 0)
+                .Select(zone => (zone.Instance, Celsius: zone.Value - 273.15)).ToList();
+        }
+
+        foreach (var (instance, celsius) in zones)
+        {
+            var kind = instance.Contains("CPU", StringComparison.OrdinalIgnoreCase) ? ThermalSensors.Cpu : ThermalSensors.System;
+            AddTemperature(readings, kind, "ACPI", instance, celsius);
+        }
+        return readings;
+    }
+
+    private double? ReadWindowsNvidiaTemperature()
+    {
+        // nvidia-smi takes a noticeable fraction of a second on Windows, so sample it less often than the 2 s refresh.
+        if (DateTime.UtcNow - _nvidiaTemperature.SampledAt > TimeSpan.FromSeconds(10))
+            _nvidiaTemperature = (ReadNvidiaSmi()?.TemperatureC, DateTime.UtcNow);
+        return _nvidiaTemperature.Celsius;
+    }
+
+    private static void AddTemperature(List<TemperatureReading> readings, string kind, string chip, string label, double celsius)
+    {
+        if (ThermalSensors.IsPlausible(celsius))
+            readings.Add(new TemperatureReading(kind, chip, label, Math.Round(celsius, 1)));
     }
 
     private static (string? Name, double? MemoryGb) ReadGpuDetails()
@@ -614,53 +739,70 @@ public sealed class SystemMonitor
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return ReadLinuxGpuUsage();
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return new GpuUsage(null, new Dictionary<int, double>());
-        IntPtr query = IntPtr.Zero, counter = IntPtr.Zero;
+
+        var engines = ReadPdhCounterArray(@"\GPU Engine(*)\Utilization Percentage", 80);
+        if (engines.Count == 0) return new GpuUsage(null, new Dictionary<int, double>());
+
+        var result = 0d;
+        var byProcess = new Dictionary<int, double>();
+        foreach (var (instanceName, value) in engines)
+        {
+            var utilization = Math.Max(0, value);
+            result += utilization;
+
+            var pidStart = instanceName.IndexOf("pid_", StringComparison.OrdinalIgnoreCase);
+            if (pidStart < 0) continue;
+            pidStart += 4;
+            var pidEnd = instanceName.IndexOf('_', pidStart);
+            if (pidEnd <= pidStart || !int.TryParse(instanceName.AsSpan(pidStart, pidEnd - pidStart), out var pid)) continue;
+            byProcess[pid] = byProcess.GetValueOrDefault(pid) + utilization;
+        }
+        return new GpuUsage(
+            Math.Clamp(result, 0, 100),
+            byProcess.ToDictionary(pair => pair.Key, pair => Math.Clamp(pair.Value, 0, 100)));
+    }
+
+    /// <summary>
+    /// Reads every instance of a wildcard PDH counter. Rate counters need two samples
+    /// <paramref name="sampleIntervalMs"/> apart; instantaneous counters (0) are read after one.
+    /// </summary>
+    private static List<(string Instance, double Value)> ReadPdhCounterArray(string counterPath, int sampleIntervalMs)
+    {
+        const uint pdhFmtDouble = 0x00000200, pdhMoreData = 0x800007D2;
+        var results = new List<(string Instance, double Value)>();
+        IntPtr query = IntPtr.Zero;
         try
         {
-            if (PdhOpenQueryW(null, IntPtr.Zero, out query) != 0) return new GpuUsage(null, new Dictionary<int, double>());
-            if (PdhAddEnglishCounterW(query, @"\GPU Engine(*)\Utilization Percentage", IntPtr.Zero, out counter) != 0) return new GpuUsage(null, new Dictionary<int, double>());
+            if (PdhOpenQueryW(null, IntPtr.Zero, out query) != 0) return results;
+            if (PdhAddEnglishCounterW(query, counterPath, IntPtr.Zero, out var counter) != 0) return results;
             PdhCollectQueryData(query);
-            Thread.Sleep(80);
-            PdhCollectQueryData(query);
+            if (sampleIntervalMs > 0)
+            {
+                Thread.Sleep(sampleIntervalMs);
+                PdhCollectQueryData(query);
+            }
+
             uint bytes = 0, count = 0;
-            var status = PdhGetFormattedCounterArrayW(counter, 0x00000200, ref bytes, ref count, IntPtr.Zero);
-            if (status != 0x800007D2 || bytes == 0) return new GpuUsage(null, new Dictionary<int, double>());
+            if (PdhGetFormattedCounterArrayW(counter, pdhFmtDouble, ref bytes, ref count, IntPtr.Zero) != pdhMoreData || bytes == 0)
+                return results;
             var buffer = Marshal.AllocHGlobal((int)bytes);
             try
             {
-                if (PdhGetFormattedCounterArrayW(counter, 0x00000200, ref bytes, ref count, buffer) != 0)
-                    return new GpuUsage(null, new Dictionary<int, double>());
+                if (PdhGetFormattedCounterArrayW(counter, pdhFmtDouble, ref bytes, ref count, buffer) != 0) return results;
                 var entrySize = Marshal.SizeOf<PdhFormattedCounterItem>();
-                var result = 0d;
-                var byProcess = new Dictionary<int, double>();
                 for (var i = 0; i < count; i++)
                 {
-                    var value = Marshal.PtrToStructure<PdhFormattedCounterItem>(IntPtr.Add(buffer, i * entrySize));
-                    if (value.Value.Status != 0) continue;
-                    var utilization = Math.Max(0, value.Value.DoubleValue);
-                    result += utilization;
-
-                    try
-                    {
-                        if (value.Name == IntPtr.Zero) continue;
-                        var instanceName = Marshal.PtrToStringUni(value.Name) ?? "";
-                        var pidStart = instanceName.IndexOf("pid_", StringComparison.OrdinalIgnoreCase);
-                        if (pidStart < 0) continue;
-                        pidStart += 4;
-                        var pidEnd = instanceName.IndexOf('_', pidStart);
-                        if (pidEnd <= pidStart || !int.TryParse(instanceName.AsSpan(pidStart, pidEnd - pidStart), out var pid)) continue;
-                        byProcess[pid] = byProcess.GetValueOrDefault(pid) + utilization;
-                    }
-                    catch { /* skip entries with bad name pointers */ }
+                    var item = Marshal.PtrToStructure<PdhFormattedCounterItem>(IntPtr.Add(buffer, i * entrySize));
+                    if (item.Value.Status != 0) continue;
+                    var name = item.Name == IntPtr.Zero ? "" : Marshal.PtrToStringUni(item.Name) ?? "";
+                    results.Add((name, item.Value.DoubleValue));
                 }
-                return new GpuUsage(
-                    Math.Clamp(result, 0, 100),
-                    byProcess.ToDictionary(pair => pair.Key, pair => Math.Clamp(pair.Value, 0, 100)));
             }
             finally { Marshal.FreeHGlobal(buffer); }
         }
-        catch { return new GpuUsage(null, new Dictionary<int, double>()); }
+        catch { }
         finally { if (query != IntPtr.Zero) PdhCloseQuery(query); }
+        return results;
     }
 
     private static GpuUsage ReadLinuxGpuUsage()
@@ -684,16 +826,23 @@ public sealed class SystemMonitor
         catch { return new GpuUsage(null, new Dictionary<int, double>()); }
     }
 
+    private static string? FindNvidiaSmi()
+    {
+        var candidates = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? new[] { Path.Combine(Environment.SystemDirectory, "nvidia-smi.exe"), @"C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe" }
+            : ["/usr/bin/nvidia-smi", "/usr/sbin/nvidia-smi", "/usr/local/bin/nvidia-smi"];
+        return candidates.FirstOrDefault(File.Exists);
+    }
+
     private static GpuUsage? ReadNvidiaSmi()
     {
-        const string command = "/usr/sbin/nvidia-smi";
-        if (!File.Exists(command)) return null;
+        if (NvidiaSmiPath is not { } command) return null;
         try
         {
             using var process = Process.Start(new ProcessStartInfo
             {
                 FileName = command,
-                Arguments = "--query-gpu=name,utilization.gpu,memory.total --format=csv,noheader,nounits",
+                Arguments = "--query-gpu=name,utilization.gpu,memory.total,temperature.gpu --format=csv,noheader,nounits",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -707,12 +856,16 @@ public sealed class SystemMonitor
                 .Select(line => line.Split(',', StringSplitOptions.TrimEntries))
                 .Where(parts => parts.Length >= 3 && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out _) &&
                                                     double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out _))
-                .Select(parts => (Name: parts[0], Usage: double.Parse(parts[1], CultureInfo.InvariantCulture), MemoryMiB: double.Parse(parts[2], CultureInfo.InvariantCulture)))
+                .Select(parts => (
+                    Name: parts[0],
+                    Usage: double.Parse(parts[1], CultureInfo.InvariantCulture),
+                    MemoryMiB: double.Parse(parts[2], CultureInfo.InvariantCulture),
+                    TemperatureC: parts.Length >= 4 && double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var celsius) ? celsius : (double?)null))
                 .ToList();
             if (gpus.Count == 0) return null;
 
             var primary = gpus[0];
-            return new GpuUsage(Math.Clamp(primary.Usage, 0, 100), new Dictionary<int, double>(), primary.Name, primary.MemoryMiB / 1024d);
+            return new GpuUsage(Math.Clamp(primary.Usage, 0, 100), new Dictionary<int, double>(), primary.Name, primary.MemoryMiB / 1024d, primary.TemperatureC);
         }
         catch { return null; }
     }
@@ -721,7 +874,8 @@ public sealed class SystemMonitor
         double? TotalPercent,
         IReadOnlyDictionary<int, double> ProcessPercent,
         string? Name = null,
-        double? MemoryGb = null);
+        double? MemoryGb = null,
+        double? TemperatureC = null);
 
     [StructLayout(LayoutKind.Sequential)] private struct MemoryStatusEx
     {

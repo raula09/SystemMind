@@ -20,6 +20,13 @@ public partial class MainWindow : Window
 {
     private TreemapControl? _treemap;
 
+    // Narrowest width at which a dashboard card's ring, header and values still fit side by side.
+    private const double MetricCardMinWidth = 160;
+    private const double BottomCardMinWidth = 270;
+    private const double CardGap = 14;
+    private Grid? _metricCards;
+    private Grid? _bottomCards;
+
     private Border? _drawer;
     private Border? _swatch;
     private TextBlock? _title;
@@ -51,6 +58,8 @@ public partial class MainWindow : Window
         _subtitle = this.FindControl<TextBlock>("DetailSubtitle");
         _explain = this.FindControl<TextBlock>("DetailExplain");
         _rowsHost = this.FindControl<ItemsControl>("DetailRows");
+        _metricCards = this.FindControl<Grid>("MetricCards");
+        _bottomCards = this.FindControl<Grid>("BottomCards");
 
         Closed += (_, _) => (DataContext as MainViewModel)?.StopMonitoring();
     }
@@ -63,6 +72,51 @@ public partial class MainWindow : Window
 
         ShowDetail(tag);
         e.Handled = true;
+    }
+
+    // Avalonia 11.2 has no container queries, so card rows drop to fewer columns when the workspace is narrow.
+    private void DashboardContent_OnSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (!e.WidthChanged) return;
+        var width = e.NewSize.Width;
+        if (_metricCards != null)
+            ReflowCards(_metricCards, FitsColumns(width, 4, MetricCardMinWidth) ? 4 : FitsColumns(width, 2, MetricCardMinWidth) ? 2 : 1);
+        if (_bottomCards != null)
+            ReflowCards(_bottomCards, FitsColumns(width, 3, BottomCardMinWidth) ? 3 : FitsColumns(width, 2, BottomCardMinWidth) ? 2 : 1);
+    }
+
+    private static bool FitsColumns(double width, int columns, double minCardWidth) =>
+        width >= columns * minCardWidth + (columns - 1) * CardGap;
+
+    /// <summary>Lays the grid's cards out in <paramref name="columns"/> star columns with gap columns/rows between them.</summary>
+    private static void ReflowCards(Grid grid, int columns)
+    {
+        var cards = grid.Children;
+        columns = Math.Clamp(columns, 1, Math.Max(1, cards.Count));
+        if (grid.ColumnDefinitions.Count == columns * 2 - 1) return;
+
+        grid.ColumnDefinitions.Clear();
+        grid.RowDefinitions.Clear();
+        for (var c = 0; c < columns; c++)
+        {
+            if (c > 0) grid.ColumnDefinitions.Add(new ColumnDefinition(CardGap, GridUnitType.Pixel));
+            grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+        }
+
+        var rows = (cards.Count + columns - 1) / columns;
+        for (var r = 0; r < rows; r++)
+        {
+            if (r > 0) grid.RowDefinitions.Add(new RowDefinition(CardGap, GridUnitType.Pixel));
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        }
+
+        for (var i = 0; i < cards.Count; i++)
+        {
+            Grid.SetColumn(cards[i], i % columns * 2);
+            Grid.SetRow(cards[i], i / columns * 2);
+            // The last card stretches across any empty cells left on its row instead of leaving a hole.
+            Grid.SetColumnSpan(cards[i], i == cards.Count - 1 ? (columns - i % columns) * 2 - 1 : 1);
+        }
     }
 
     private void DetailClose_OnClick(object? sender, RoutedEventArgs e) => CloseDrawer();
@@ -120,7 +174,7 @@ public partial class MainWindow : Window
         {
             case "CPU":
                 {
-                    color = "#4D96F0";
+                    color = "#00AEEF";
                     subtitle = P(vm, "CpuHeadline");
                     var hist = History(vm, "CpuHistory");
                     rows.Add(new("Utilisation", P(vm, "CpuHeadline")));
@@ -135,7 +189,7 @@ public partial class MainWindow : Window
 
             case "Memory":
                 {
-                    color = "#F2994A";
+                    color = "#00AEEF";
                     subtitle = P(vm, "MemoryHeadline");
                     var hist = History(vm, "MemoryHistory");
                     var pct = ToDouble(Raw(vm, "MemoryPercent"));
@@ -152,7 +206,7 @@ public partial class MainWindow : Window
 
             case "Disk":
                 {
-                    color = "#3FCF6B";
+                    color = "#45D6A1";
                     subtitle = P(vm, "StorageHeadline");
                     var pct = ToDouble(Raw(vm, "StoragePercent"));
                     rows.Add(new("Usage", Fmt(pct, "F1", "%")));
@@ -170,7 +224,7 @@ public partial class MainWindow : Window
 
             case "Network":
                 {
-                    color = "#B65CF0";
+                    color = "#00AEEF";
                     subtitle = "Live throughput";
                     rows.Add(new("Download", P(vm, "NetworkDownText")));
                     rows.Add(new("Upload", P(vm, "NetworkUpText")));
@@ -183,19 +237,30 @@ public partial class MainWindow : Window
 
             case "Thermal":
                 {
-                    color = "#F2994A";
-                    subtitle = P(vm, "ThermalText");
-                    rows.Add(new("Current", P(vm, "ThermalText")));
+                    color = "#FFB23F";
+                    subtitle = $"{P(vm, "ThermalCaption")} · {P(vm, "ThermalStatusText")}";
                     rows.Add(new("CPU", P(vm, "ThermalCpuText")));
+                    rows.Add(new("GPU", P(vm, "ThermalGpuText")));
+                    rows.Add(new("Storage", P(vm, "ThermalStorageText")));
                     rows.Add(new("Hottest sensor", P(vm, "ThermalMaxText")));
-                    explain = "Temperatures reported by hardware sensors. Under load, 70–85 °C is common for CPUs; sustained readings " +
-                              "above ~90 °C can cause throttling. Check fans, dust, airflow and background load if it stays high.";
+                    foreach (var sensor in Items(vm, "TemperatureSensors"))
+                        rows.Add(new($"{P(sensor, "Kind")} · {P(sensor, "Name")}", Fmt(ToDouble(Raw(sensor, "Celsius")), "F1", "°C")));
+
+                    explain = Raw(vm, "HasTemperatures") is true
+                        ? "Temperatures reported by hardware sensors. Under load, 70–85 °C is common for CPUs; sustained readings " +
+                          "above ~90 °C can cause throttling. Check fans, dust, airflow and background load if it stays high."
+                        : OperatingSystem.IsWindows()
+                            ? "Windows only exposes temperatures through ACPI thermal zones (common on laptops, rare on desktops) " +
+                              "and NVIDIA's nvidia-smi. Other CPU and GPU sensors need a vendor driver such as the motherboard " +
+                              "or GPU utility."
+                            : "No temperature sensors were found. On Linux, install lm_sensors and run 'sudo sensors-detect' to load " +
+                              "the right driver (k10temp for AMD, coretemp for Intel), then reopen DiagnoX.";
                     break;
                 }
 
             case "Battery":
                 {
-                    color = "#3FCF6B";
+                    color = "#FFB23F";
                     subtitle = P(vm, "BatteryText");
                     rows.Add(new("Charge", P(vm, "BatteryText")));
                     rows.Add(new("Status", P(vm, "BatteryStatusText")));
@@ -207,7 +272,7 @@ public partial class MainWindow : Window
 
             case "GPU":
                 {
-                    color = "#4D96F0";
+                    color = "#FF5964";
                     subtitle = P(vm, "GpuNameText");
                     rows.Add(new("Load", P(vm, "GpuText")));
                     rows.Add(new("Device", P(vm, "GpuNameText")));
